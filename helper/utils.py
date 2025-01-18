@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 import psutil
+from pathlib import Path
 from pytz import timezone
 from config import Config
 from script import Txt
@@ -137,25 +138,81 @@ async def CANT_CONFIG_GROUP_MSG(client, message):
     await ms.delete()
 
 
+
 async def Compress_Stats(e, userid):
-
-
     if int(userid) not in [e.from_user.id, 0]:
         return await e.answer(f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", show_alert=True)
     
     inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
     outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
+
     try:
-        ot = humanbytes(int((Path(outp).stat().st_size)))
-        ov = humanbytes(int(Path(inp).stat().st_size))
-        processing_file_name = inp.replace(f"ffmpeg/{userid}/", "").replace(f"_", "")
-        ans = f"Processing Media: {processing_file_name}\n\nDownloaded: {ov}\n\nCompressed: {ot}"
-        await e.answer(ans, cache_time=0, show_alert=True)
+        input_size = Path(inp).stat().st_size
+        start_time = time.time()
+        
+        while True:
+            # Get the current size of the output file
+            current_size = Path(outp).stat().st_size if Path(outp).exists() else 0
+            percent = (current_size / input_size) * 100 if input_size else 0
+
+            # Calculate speed and estimated time remaining
+            elapsed_time = time.time() - start_time
+            speed = current_size / elapsed_time if elapsed_time > 0 else 0
+            remaining_time = (input_size - current_size) / speed if speed > 0 else 0
+
+            # Generate progress bar
+            progress_bar_length = 20  # Adjust length as needed
+            completed_length = int(progress_bar_length * percent / 100)
+            progress_bar = "█" * completed_length + "░" * (progress_bar_length - completed_length)
+
+            # Format values
+            percent_formatted = f"{percent:.2f}"
+            speed_formatted = f"{humanbytes(speed)}/s"
+            elapsed_formatted = time.strftime("%M:%S", time.gmtime(elapsed_time))
+            remaining_formatted = time.strftime("%M:%S", time.gmtime(remaining_time))
+            downloaded_size = humanbytes(current_size)
+            total_size = humanbytes(input_size)
+
+            # Prepare the progress message
+            progress_message = (
+                f"▶️ **Ongoing - Encoding**\n\n"
+                f"📺 **Anime Name**: [Your Anime Title]\n"
+                f"📄 **Status**: Encoding\n"
+                f"📊 **Progress**: `{percent_formatted}%`\n"
+                f"[{progress_bar}] {percent_formatted}%\n"
+                f"📥 **Size**: {downloaded_size} / ~ {total_size}\n"
+                f"🚀 **Speed**: {speed_formatted}\n"
+                f"⏳ **Time Taken**: {elapsed_formatted}\n"
+                f"⌛ **Time Left**: {remaining_formatted}"
+            )
+
+            # Send the message
+            await e.answer(progress_message, cache_time=0, show_alert=True)
+
+            # Break loop when done
+            if percent >= 100:
+                break
+
+            # Sleep for a short while to prevent spamming updates
+            await asyncio.sleep(1)
+
     except Exception as er:
         print(er)
         await e.answer(
-            "Someting Went Wrong.\nSend Media Again.", cache_time=0, alert=True
+            "Something Went Wrong.\nSend Media Again.", cache_time=0, show_alert=True
         )
+
+def humanbytes(size):
+    """Convert bytes into human-readable format."""
+    if not size:
+        return "0 B"
+    power = 2**10
+    n = 0
+    units = ["B", "KB", "MB", "GB", "TB"]
+    while size > power and n < len(units) - 1:
+        size /= power
+        n += 1
+    return f"{size:.2f} {units[n]}"
 
 async def skip(e, userid):
 
