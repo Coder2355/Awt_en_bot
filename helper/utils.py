@@ -173,6 +173,7 @@ def progress_bar(completed, total, length=20):
 
 
 
+
 async def Compress_Stats(e, userid):
     if int(userid) not in [e.from_user.id, 0]:
         return await e.answer(
@@ -189,30 +190,34 @@ async def Compress_Stats(e, userid):
     try:
         # Get input file size
         input_size = Path(inp).stat().st_size
-        # Get output file size (before encoding starts)
+        
+        # Check if output file exists before encoding starts
         output_size_before = Path(outp).stat().st_size if Path(outp).exists() else 0
-
+        
         # Calculate progress for compressed file
         # If output file exists, calculate progress
         output_size = Path(outp).stat().st_size if Path(outp).exists() else 0
         percentage = (output_size / input_size) * 100 if input_size > 0 else 0
         bar = progress_bar(output_size, input_size)
 
-        # Encoding speed
+        # Encoding speed (calculating based on elapsed time)
         start_time = e.message.date.timestamp()
         elapsed_time = time.time() - start_time
         encoding_speed = output_size / elapsed_time if elapsed_time > 0 else 0  # Bytes per second
         encoding_speed_human = humanbytes(encoding_speed) + "/s"
 
-        # Time left
+        # Time left (remaining size / encoding speed)
         remaining_size = input_size - output_size
         time_left = remaining_size / encoding_speed if encoding_speed > 0 else 0
         time_left_formatted = TimeFormatter(time_left)
 
-        # Formatting outputs
+        # Formatting output values
         compressed_size = humanbytes(output_size)
         original_size = humanbytes(input_size)
         output_size_before_human = humanbytes(output_size_before)
+
+        # Estimate the compressed size if the process isn't finished
+        estimated_compressed_size = humanbytes(output_size_before)  # Before encoding starts
 
         ans = (
             f"**Encoding Status:**\n"
@@ -220,8 +225,9 @@ async def Compress_Stats(e, userid):
             f"**Progress**: `{percentage:.2f}%`\n"
             f"{bar}\n\n"
             f"**Compressed Size Before Encoding**: `{output_size_before_human}`\n"
-            f"**Compressed Size**: `{compressed_size}`\n"
+            f"**Compressed Size Now**: `{compressed_size}`\n"
             f"**Original Size**: `{original_size}`\n"
+            f"**Estimated Compressed Size**: `{estimated_compressed_size}`\n"
             f"**Encoding Speed**: `{encoding_speed_human}`\n"
             f"**Estimated Time Left**: `{time_left_formatted}`"
         )
@@ -231,11 +237,13 @@ async def Compress_Stats(e, userid):
             ans = ans[:197] + "..."
 
         await e.answer(ans, cache_time=0, show_alert=True)
+
     except Exception as er:
         print(er)
         await e.answer(
             "Something went wrong. Please send the media again.", cache_time=0, show_alert=True
-    )
+        )
+
 
 
 
