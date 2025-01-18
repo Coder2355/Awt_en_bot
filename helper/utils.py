@@ -174,10 +174,14 @@ def progress_bar(completed, total, length=20):
 
 async def Compress_Stats(e, userid):
     if int(userid) not in [e.from_user.id, 0]:
-        return await e.answer(f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", show_alert=True)
+        return await e.answer(
+            f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", 
+            show_alert=True
+        )
 
     inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
     outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
+    
     try:
         input_size = Path(inp).stat().st_size
         output_size = Path(outp).stat().st_size
@@ -187,33 +191,33 @@ async def Compress_Stats(e, userid):
         bar = progress_bar(output_size, input_size)
 
         # Estimate time left based on progress
-        start_time = e.message.date.timestamp()  # Message timestamp
+        start_time = e.message.date.timestamp()
         elapsed_time = time.time() - start_time
-        speed = output_size / elapsed_time  # Bytes per second
+        speed = output_size / elapsed_time if elapsed_time > 0 else 0
         time_left = (input_size - output_size) / speed if speed > 0 else 0
 
         # Formatting outputs
         ot = humanbytes(output_size)
         ov = humanbytes(input_size)
         time_left_formatted = TimeFormatter(time_left)
-        processing_file_name = inp.replace(f"ffmpeg/{userid}/", "").replace("_", "")
 
         ans = (
-            f"**Processing Media**: `{processing_file_name}`\n\n"
-            f"**Downloaded**: `{ov}`\n"
-            f"**Compressed**: `{ot}`\n"
-            f"**Progress**: `{percentage:.2f}%`\n"
-            f"{bar}\n\n"
-            f"**Size**: `{ot} / {ov}`\n"
-            f"**Time Left**: `{time_left_formatted}`"
+            f"**Progress**: {percentage:.2f}%\n"
+            f"{bar}\n"
+            f"Compressed: {ot} / {ov}\n"
+            f"Time Left: {time_left_formatted}"
         )
+
+        # Truncate to ensure message length is under 200 characters
+        if len(ans) > 200:
+            ans = ans[:197] + "..."
+        
         await e.answer(ans, cache_time=0, show_alert=True)
     except Exception as er:
         print(er)
         await e.answer(
-            "Something Went Wrong.\nSend Media Again.", cache_time=0, alert=True
+            "Something went wrong. Please send the media again.", cache_time=0, show_alert=True
         )
-
 
 
 async def skip(e, userid):
