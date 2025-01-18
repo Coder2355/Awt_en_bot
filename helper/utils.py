@@ -19,12 +19,13 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMedi
 
 QUEUE = []
 
+user_operations = {}
 
 
 async def progress_for_pyrogram(current, total, ud_type, message, start):
     now = time.time()
     diff = now - start
-    if round(diff % 5.00) == 0 or current == total:        
+    if round(diff % 5.00) == 0 or current == total:
         percentage = current * 100 / total
         speed = current / diff
         elapsed_time = round(diff) * 1000
@@ -37,20 +38,28 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
         progress = "{0}{1}".format(
             ''.join(["⬢" for i in range(math.floor(percentage / 5))]),
             ''.join(["⬡" for i in range(20 - math.floor(percentage / 5))])
-        )            
-        tmp = progress + Txt.PROGRESS_BAR.format( 
+        )
+        tmp = progress + Txt.PROGRESS_BAR.format(
             round(percentage, 2),
             humanbytes(current),
             humanbytes(total),
-            humanbytes(speed),            
+            humanbytes(speed),
             estimated_total_time if estimated_total_time != '' else "0 s"
         )
+
         try:
+            # Store the operation in the user_operations dictionary
+            user_operations[message.chat.id] = message
+
+            # Update the progress message
             await message.edit(
-                text=f"{ud_type}\n\n{tmp}",               
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✖️ 𝙲𝙰𝙽𝙲𝙴𝙻 ✖️", callback_data=f"close-{message.from_user.id}")]])                                               
+                text=f"{ud_type}\n\n{tmp}",
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("✖️ 𝙲𝙰𝙽𝙲𝙴𝙻 ✖️", callback_data=f"close-{message.chat.id}")]]
+                )
             )
-        except:
+        except Exception as e:
+            print(e)
             pass
 
 def humanbytes(size):    
@@ -176,7 +185,6 @@ async def Compress_Stats(e, userid):
             # Prepare the progress message
             progress_message = (
                 f"▶️ **Ongoing - Encoding**\n\n"
-                f"📺 **Anime Name**: [Your Anime Title]\n"
                 f"📄 **Status**: Encoding\n"
                 f"📊 **Progress**: `{percent_formatted}%`\n"
                 f"[{progress_bar}] {percent_formatted}%\n"
