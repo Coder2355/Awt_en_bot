@@ -172,7 +172,7 @@ async def Compress_Stats(e, userid):
 ‣ <b>Status:</b> <i>Compressing</i>
 <code>[{bar}]</code> {encoding_progress:.2f}%
 ‣ <b>Size:</b> {humanbytes(output_size)} out of {humanbytes(input_size)}
-‣ <b>Time Left:</b> {convertTime(eta)}"""
+‣ <b>Time Left:</b> {convert(eta)}"""
         
         await e.answer(progress_str, cache_time=0, show_alert=True)
     
