@@ -149,67 +149,72 @@ async def CANT_CONFIG_GROUP_MSG(client, message):
     await ms.delete()
 
 
+import math
+import time
 
-async def get_media_duration(file_path: str) -> float:
-    try:
-        result = subprocess.run(
-            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", file_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        return float(result.stdout.strip())
-    except Exception as e:
-        print(f"Error fetching duration for {file_path}: {e}")
-        return 1.0  # Default duration if unable to fetch
+
+def format_time(seconds):
+    """Convert seconds into a human-readable format."""
+    mins, secs = divmod(int(seconds), 60)
+    hours, mins = divmod(mins, 60)
+    if hours > 0:
+        return f"{hours}h {mins}m {secs}s"
+    elif mins > 0:
+        return f"{mins}m {secs}s"
+    else:
+        return f"{secs}s"
+
+
+def progress_bar(completed, total, length=20):
+    """Generate a progress bar."""
+    progress = math.floor(length * completed / total)
+    bar = "█" * progress + "░" * (length - progress)
+    return f"[{bar}]"
+
 
 async def Compress_Stats(e, userid):
+    if int(userid) not in [e.from_user.id, 0]:
+        return await e.answer(f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", show_alert=True)
+
+    inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
+    outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
     try:
-        inp_dir = f"ffmpeg/{e.from_user.id}"
-        out_dir = f"encode/{e.from_user.id}"
-        
-        # Validate directories
-        if not os.path.exists(inp_dir):
-            raise FileNotFoundError(f"Input directory does not exist: {inp_dir}")
-        if not os.path.exists(out_dir):
-            raise FileNotFoundError(f"Output directory does not exist: {out_dir}")
-        
-        inp = f"{inp_dir}/{os.listdir(inp_dir)[0]}"
-        outp = f"{out_dir}/{os.listdir(out_dir)[0]}"
-
-        # Validate input and output files
-        if not os.path.isfile(inp):
-            raise FileNotFoundError(f"Input file not found: {inp}")
-        if not os.path.isfile(outp):
-            raise FileNotFoundError(f"Output file not found: {outp}")
-
         input_size = Path(inp).stat().st_size
         output_size = Path(outp).stat().st_size
-        total_time = await get_media_duration(inp)
 
-        # Calculate progress
-        encoding_progress = (output_size / input_size) * 100
-        bar = "█" * floor(encoding_progress / 8) + "▒" * (12 - floor(encoding_progress / 8))
-        eta = ((input_size - output_size) / max(output_size / (time() - e.date.timestamp()), 0.01))
+        # Calculate percentage and progress bar
+        percentage = (output_size / input_size) * 100
+        bar = progress_bar(output_size, input_size)
 
-        progress_str = f"""
-‣ <b>Status:</b> <i>Compressing</i>
-<code>[{bar}]</code> {encoding_progress:.2f}%
-‣ <b>Size:</b> {humanbytes(output_size)} out of {humanbytes(input_size)}
-‣ <b>Time Left:</b> {convertTime(eta)}"""
+        # Estimate time left based on progress
+        start_time = e.message.date.timestamp()  # Message timestamp
+        elapsed_time = time.time() - start_time
+        speed = output_size / elapsed_time  # Bytes per second
+        time_left = (input_size - output_size) / speed if speed > 0 else 0
 
-        await e.answer(progress_str, cache_time=0, show_alert=True)
+        # Formatting outputs
+        ot = humanbytes(output_size)
+        ov = humanbytes(input_size)
+        time_left_formatted = TimeFormatter(time_left)
+        processing_file_name = inp.replace(f"ffmpeg/{userid}/", "").replace("_", "")
 
-    except FileNotFoundError as fnf_error:
-        print(f"FileNotFoundError: {fnf_error}")
-        await e.answer(
-            "File not found. Please check your input and try again.", cache_time=0, show_alert=True
+        ans = (
+            f"**Processing Media**: `{processing_file_name}`\n\n"
+            f"**Downloaded**: `{ov}`\n"
+            f"**Compressed**: `{ot}`\n"
+            f"**Progress**: `{percentage:.2f}%`\n"
+            f"{bar}\n\n"
+            f"**Size**: `{ot} / {ov}`\n"
+            f"**Time Left**: `{time_left_formatted}`"
         )
-    except Exception as err:
-        print(f"Unexpected error: {err}")
+        await e.answer(ans, cache_time=0, show_alert=True)
+    except Exception as er:
+        print(er)
         await e.answer(
-            "Something went wrong. Please send the media again.", cache_time=0, show_alert=True
-    )
+            "Something Went Wrong.\nSend Media Again.", cache_time=0, alert=True
+        )
+
+
 
 async def skip(e, userid):
 
