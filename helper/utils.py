@@ -187,12 +187,15 @@ async def Compress_Stats(e, userid):
     outp = os.path.join(output_folder, os.listdir(output_folder)[0])
 
     try:
-        # Get file sizes
+        # Get input file size
         input_size = Path(inp).stat().st_size
-        output_size = Path(outp).stat().st_size
+        # Get output file size (before encoding starts)
+        output_size_before = Path(outp).stat().st_size if Path(outp).exists() else 0
 
         # Calculate progress for compressed file
-        percentage = (output_size / input_size) * 100
+        # If output file exists, calculate progress
+        output_size = Path(outp).stat().st_size if Path(outp).exists() else 0
+        percentage = (output_size / input_size) * 100 if input_size > 0 else 0
         bar = progress_bar(output_size, input_size)
 
         # Encoding speed
@@ -209,12 +212,14 @@ async def Compress_Stats(e, userid):
         # Formatting outputs
         compressed_size = humanbytes(output_size)
         original_size = humanbytes(input_size)
+        output_size_before_human = humanbytes(output_size_before)
 
         ans = (
             f"**Encoding Status:**\n"
             f"**File**: `{inp.replace(f'ffmpeg/{userid}/', '').replace('_', '')}`\n"
             f"**Progress**: `{percentage:.2f}%`\n"
             f"{bar}\n\n"
+            f"**Compressed Size Before Encoding**: `{output_size_before_human}`\n"
             f"**Compressed Size**: `{compressed_size}`\n"
             f"**Original Size**: `{original_size}`\n"
             f"**Encoding Speed**: `{encoding_speed_human}`\n"
@@ -230,7 +235,7 @@ async def Compress_Stats(e, userid):
         print(er)
         await e.answer(
             "Something went wrong. Please send the media again.", cache_time=0, show_alert=True
-        )
+    )
 
 
 
