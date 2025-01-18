@@ -146,12 +146,10 @@ async def CANT_CONFIG_GROUP_MSG(client, message):
     await asyncio.sleep(10)
     await ms.delete()
 
-
-
 async def Compress_Stats(e, userid):
     if int(userid) not in [e.from_user.id, 0]:
         return await e.answer(
-            f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ",
+            f"⚠️ Hey {e.from_user.first_name}\nYou can't see the status as this is not your file",
             show_alert=True,
         )
 
@@ -161,20 +159,19 @@ async def Compress_Stats(e, userid):
         processing_file_name = inp.replace(f"ffmpeg/{userid}/", "").replace("_", "")
         ov = humanbytes(int(Path(inp).stat().st_size))
 
-        # Estimate output file size (replace this logic with real estimation if available)
-        estimated_size = int(Path(inp).stat().st_size * 0.6)  # Assume 60% reduction
+        # Estimate output file size
+        estimated_size = int(Path(inp).stat().st_size * 0.6)
         estimated_output_size = humanbytes(estimated_size)
 
         start_time = time.time()
 
-        # Simulate encoding process (replace with actual encoding logic and updates)
-        for progress in range(1, 101):  # Simulating 100% progress
+        # Simulate encoding process
+        for progress in range(1, 101, 5):  # Update every 5%
             progress_bar = f"[{'█' * (progress // 5)}{'░' * (20 - (progress // 5))}]"
-            encoding_speed = f"{round(progress * 1.5, 2)}x"  # Example speed calculation
+            encoding_speed = f"{round(progress * 1.5, 2)}x"
             elapsed_time = time.time() - start_time
             remaining_time = (100 - progress) * (elapsed_time / progress) if progress > 0 else 0
 
-            # Shorten the message to fit Telegram's character limit
             ans = (
                 f"Processing: {processing_file_name}\n"
                 f"Downloaded: {ov}\n"
@@ -185,14 +182,13 @@ async def Compress_Stats(e, userid):
                 f"Remaining: {round(remaining_time, 2)}s"
             )
 
-            # Send shorter updates to avoid errors
-            await e.answer(ans[:200], cache_time=0, show_alert=True)  # Truncate if necessary
-            time.sleep(0.1)  # Simulate processing delay
+            # Send periodic updates
+            await e.answer(ans[:200], cache_time=0, show_alert=True)
+            time.sleep(0.5)  # Avoid flooding Telegram
 
-        # Actual file compression completion
+        # File compression complete
         ot = humanbytes(int(Path(outp).stat().st_size))
-        end_time = time.time()
-        total_time = round(end_time - start_time, 2)
+        total_time = round(time.time() - start_time, 2)
 
         final_ans = (
             f"Processing Complete:\n"
@@ -201,10 +197,11 @@ async def Compress_Stats(e, userid):
             f"Compressed: {ot}\n"
             f"Time Taken: {total_time}s"
         )
-        await e.answer(final_ans[:200], cache_time=0, show_alert=True)  # Truncate if necessary
+        await e.answer(final_ans[:200], cache_time=0, show_alert=True)
     except Exception as er:
         print(er)
-        await e.answer("Something Went Wrong.\nSend Media Again.", cache_time=0, show_alert=True)
+        await e.answer("Something went wrong. Please send the media again.", cache_time=0, show_alert=True)
+
 
 async def skip(e, userid):
 
