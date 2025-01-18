@@ -13,3 +13,4 @@ humanize
 gunicorn==20.1.0
 werkzeug==2.0.2
 flask==2.0.2
+asyncio
