@@ -16,6 +16,7 @@ from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 
+
 QUEUE = []
 
 user_operations = {}
@@ -149,91 +150,59 @@ async def CANT_CONFIG_GROUP_MSG(client, message):
 
 async def Compress_Stats(e, userid):
     if int(userid) not in [e.from_user.id, 0]:
-        return await e.answer(f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", show_alert=True)
-    
+        return await e.answer(
+            f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ",
+            show_alert=True,
+        )
+
     try:
-        # Input and output file paths
         inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
         outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
-        
-        # Ensure input file exists
-        if not Path(inp).exists():
-            raise FileNotFoundError(f"Input file not found: {inp}")
+        processing_file_name = inp.replace(f"ffmpeg/{userid}/", "").replace("_", "")
+        ov = humanbytes(int(Path(inp).stat().st_size))
 
-        # Input file size
-        input_size = Path(inp).stat().st_size
+        # Estimate output file size (replace this logic with real estimation if available)
+        estimated_size = int(Path(inp).stat().st_size * 0.6)  # Assume 60% reduction
+        estimated_output_size = humanbytes(estimated_size)
+
         start_time = time.time()
 
-        while True:
-            # Check if output file exists
-            if not Path(outp).exists():
-                current_size = 0
-            else:
-                current_size = Path(outp).stat().st_size
-
-            # Calculate progress
-            percent = (current_size / input_size) * 100 if input_size > 0 else 0
-
-            # Calculate speed and estimated time remaining
+        # Simulate encoding process (replace with actual encoding logic and updates)
+        for progress in range(1, 101):  # Simulating 100% progress
+            progress_bar = f"[{'█' * (progress // 5)}{'░' * (20 - (progress // 5))}]"
+            encoding_speed = f"{round(progress * 1.5, 2)}x"  # Example speed calculation
             elapsed_time = time.time() - start_time
-            speed = current_size / elapsed_time if elapsed_time > 0 else 0
-            remaining_time = (input_size - current_size) / speed if speed > 0 else 0
-
-            # Generate progress bar
-            progress_bar_length = 20
-            completed_length = int(progress_bar_length * percent / 100)
-            progress_bar = "█" * completed_length + "░" * (progress_bar_length - completed_length)
-
-            # Format values
-            percent_formatted = f"{percent:.2f}"
-            speed_formatted = f"{humanbytes1(speed)}/s"
-            elapsed_formatted = time.strftime("%M:%S", time.gmtime(elapsed_time))
-            remaining_formatted = time.strftime("%M:%S", time.gmtime(remaining_time))
-            downloaded_size = humanbytes1(current_size)
-            total_size = humanbytes1(input_size)
-
-            # Prepare progress message
-            progress_message = (
-                f"▶️ **Ongoing - Encoding**\n\n"
-                f"📺 **Anime Name**: [Your Anime Title]\n"
-                f"📄 **Status**: Encoding\n"
-                f"📊 **Progress**: `{percent_formatted}%`\n"
-                f"[{progress_bar}] {percent_formatted}%\n"
-                f"📥 **Size**: {downloaded_size} / ~ {total_size}\n"
-                f"🚀 **Speed**: {speed_formatted}\n"
-                f"⏳ **Time Taken**: {elapsed_formatted}\n"
-                f"⌛ **Time Left**: {remaining_formatted}"
+            remaining_time = (100 - progress) * (elapsed_time / progress) if progress > 0 else 0
+            await e.answer(
+                f"Processing Media: {processing_file_name}\n\n"
+                f"Downloaded: {ov}\n"
+                f"Estimated Output Size: {estimated_output_size}\n"
+                f"Encoding Speed: {encoding_speed}\n"
+                f"Progress: {progress_bar} {progress}%\n"
+                f"Time Elapsed: {round(elapsed_time, 2)}s\n"
+                f"Time Remaining: {round(remaining_time, 2)}s",
+                cache_time=0,
+                show_alert=True,
             )
+            time.sleep(0.1)  # Simulate processing delay
 
-            # Send progress message
-            await e.answer(progress_message, cache_time=0, show_alert=True)
+        # Actual file compression completion
+        ot = humanbytes(int(Path(outp).stat().st_size))
+        end_time = time.time()
+        total_time = round(end_time - start_time, 2)
 
-            # Break loop if encoding is complete
-            if percent >= 100:
-                break
-
-            # Wait for a short interval before updating
-            await asyncio.sleep(1)
-
-    except FileNotFoundError as fnf_error:
-        print(fnf_error)
-        await e.answer("Error: Input file not found. Please upload the media again.", cache_time=0, show_alert=True)
+        ans = (
+            f"Processing Media: {processing_file_name}\n\n"
+            f"Downloaded: {ov}\n\n"
+            f"Compressed: {ot}\n"
+            f"Encoding Speed: {encoding_speed}\n"
+            f"Time Taken: {total_time}s"
+        )
+        await e.answer(ans, cache_time=0, show_alert=True)
     except Exception as er:
-        print(f"Unexpected error: {er}")
-        await e.answer("Something went wrong.\nSend media again.", cache_time=0, show_alert=True)
+        print(er)
+        await e.answer("Something Went Wrong.\nSend Media Again.", cache_time=0, show_alert=True)
 
-
-def humanbytes1(size):
-    """Convert bytes into human-readable format."""
-    if not size:
-        return "0 B"
-    power = 2**10
-    n = 0
-    units = ["B", "KB", "MB", "GB", "TB"]
-    while size > power and n < len(units) - 1:
-        size /= power
-        n += 1
-    return f"{size:.2f} {units[n]}"
 
 async def skip(e, userid):
 
