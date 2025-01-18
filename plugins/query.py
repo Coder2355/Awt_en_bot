@@ -5,7 +5,7 @@ import sys
 import humanize
 from pyrogram import Client, filters
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from helper.utils import Compress_Stats, skip, CompressVideo
+from helper.utils import Compress_Stats, skip, CompressVideo, user_operations
 from helper.database import db
 from script import Txt
 
@@ -158,13 +158,17 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
             print(e)
 
     elif data.startswith("close"):
-
+        
         user_id = data.split('-')[1]
         
         if int(user_id) not in [query.from_user.id, 0]:
             return await query.answer(f"⚠️ Hᴇʏ {query.from_user.first_name}\nTʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ ʏᴏᴜ ᴄᴀɴ'ᴛ ᴅᴏ ᴀɴʏ ᴏᴘᴇʀᴀᴛɪᴏɴ", show_alert=True)
         
         try:
+            if query.message.chat.id in user_operations:
+                await query.message.delete()
+                del user_operations[query.message.chat.id]  # Cleanup operation
+
             await query.message.delete()
             await query.message.reply_to_message.delete()
             await query.message.continue_propagation()
