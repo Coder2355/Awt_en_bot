@@ -149,59 +149,38 @@ async def CANT_CONFIG_GROUP_MSG(client, message):
 async def Compress_Stats(e, userid):
     if int(userid) not in [e.from_user.id, 0]:
         return await e.answer(
-            f"⚠️ Hey {e.from_user.first_name}\nYou can't see the status as this is not your file",
-            show_alert=True,
+            f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", 
+            show_alert=True
         )
+    
+    inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
+    outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
 
     try:
-        inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
-        outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
-        processing_file_name = inp.replace(f"ffmpeg/{userid}/", "").replace("_", "")
-        ov = humanbytes(int(Path(inp).stat().st_size))
+        # Get file details
+        input_size = Path(inp).stat().st_size
+        output_size = Path(outp).stat().st_size
+        total_time = await mediainfo(inp, get_duration=True)
+        total_time = float(total_time) if isinstance(total_time, str) else 1.0
 
-        # Estimate output file size
-        estimated_size = int(Path(inp).stat().st_size * 0.6)
-        estimated_output_size = humanbytes(estimated_size)
-
-        start_time = time.time()
-
-        # Simulate encoding process
-        for progress in range(1, 101, 5):  # Update every 5%
-            progress_bar = f"[{'█' * (progress // 5)}{'░' * (20 - (progress // 5))}]"
-            encoding_speed = f"{round(progress * 1.5, 2)}x"
-            elapsed_time = time.time() - start_time
-            remaining_time = (100 - progress) * (elapsed_time / progress) if progress > 0 else 0
-
-            ans = (
-                f"Processing: {processing_file_name}\n"
-                f"Downloaded: {ov}\n"
-                f"Estimated Size: {estimated_output_size}\n"
-                f"Progress: {progress}%\n"
-                f"Speed: {encoding_speed}\n"
-                f"Elapsed: {round(elapsed_time, 2)}s\n"
-                f"Remaining: {round(remaining_time, 2)}s"
-            )
-
-            # Send periodic updates
-            await e.answer(ans[:200], cache_time=0, show_alert=True)
-            time.sleep(0.5)  # Avoid flooding Telegram
-
-        # File compression complete
-        ot = humanbytes(int(Path(outp).stat().st_size))
-        total_time = round(time.time() - start_time, 2)
-
-        final_ans = (
-            f"Processing Complete:\n"
-            f"File: {processing_file_name}\n"
-            f"Downloaded: {ov}\n"
-            f"Compressed: {ot}\n"
-            f"Time Taken: {total_time}s"
+        # Calculate progress
+        encoding_progress = (output_size / input_size) * 100
+        bar = "█" * floor(encoding_progress / 8) + "▒" * (12 - floor(encoding_progress / 8))
+        eta = ((input_size - output_size) / max(output_size / (time() - e.date.timestamp()), 0.01))
+        
+        progress_str = f"""
+‣ <b>Status:</b> <i>Compressing</i>
+<code>[{bar}]</code> {encoding_progress:.2f}%
+‣ <b>Size:</b> {humanbytes(output_size)} out of {humanbytes(input_size)}
+‣ <b>Time Left:</b> {convertTime(eta)}"""
+        
+        await e.answer(progress_str, cache_time=0, show_alert=True)
+    
+    except Exception as err:
+        print(err)
+        await e.answer(
+            "Something went wrong.\nPlease send the media again.", cache_time=0, show_alert=True
         )
-        await e.answer(final_ans[:200], cache_time=0, show_alert=True)
-    except Exception as er:
-        print(er)
-        await e.answer("Something went wrong. Please send the media again.", cache_time=0, show_alert=True)
-
 
 async def skip(e, userid):
 
