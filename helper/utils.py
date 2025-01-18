@@ -173,17 +173,20 @@ async def Compress_Stats(e, userid):
             encoding_speed = f"{round(progress * 1.5, 2)}x"  # Example speed calculation
             elapsed_time = time.time() - start_time
             remaining_time = (100 - progress) * (elapsed_time / progress) if progress > 0 else 0
-            await e.answer(
-                f"Processing Media: {processing_file_name}\n\n"
+
+            # Shorten the message to fit Telegram's character limit
+            ans = (
+                f"Processing: {processing_file_name}\n"
                 f"Downloaded: {ov}\n"
-                f"Estimated Output Size: {estimated_output_size}\n"
-                f"Encoding Speed: {encoding_speed}\n"
-                f"Progress: {progress_bar} {progress}%\n"
-                f"Time Elapsed: {round(elapsed_time, 2)}s\n"
-                f"Time Remaining: {round(remaining_time, 2)}s",
-                cache_time=0,
-                show_alert=True,
+                f"Estimated Size: {estimated_output_size}\n"
+                f"Progress: {progress}%\n"
+                f"Speed: {encoding_speed}\n"
+                f"Elapsed: {round(elapsed_time, 2)}s\n"
+                f"Remaining: {round(remaining_time, 2)}s"
             )
+
+            # Send shorter updates to avoid errors
+            await e.answer(ans[:200], cache_time=0, show_alert=True)  # Truncate if necessary
             time.sleep(0.1)  # Simulate processing delay
 
         # Actual file compression completion
@@ -191,18 +194,17 @@ async def Compress_Stats(e, userid):
         end_time = time.time()
         total_time = round(end_time - start_time, 2)
 
-        ans = (
-            f"Processing Media: {processing_file_name}\n\n"
-            f"Downloaded: {ov}\n\n"
+        final_ans = (
+            f"Processing Complete:\n"
+            f"File: {processing_file_name}\n"
+            f"Downloaded: {ov}\n"
             f"Compressed: {ot}\n"
-            f"Encoding Speed: {encoding_speed}\n"
             f"Time Taken: {total_time}s"
         )
-        await e.answer(ans, cache_time=0, show_alert=True)
+        await e.answer(final_ans[:200], cache_time=0, show_alert=True)  # Truncate if necessary
     except Exception as er:
         print(er)
         await e.answer("Something Went Wrong.\nSend Media Again.", cache_time=0, show_alert=True)
-
 
 async def skip(e, userid):
 
