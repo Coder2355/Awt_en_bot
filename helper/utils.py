@@ -12,6 +12,8 @@ import psutil
 from pathlib import Path
 from pytz import timezone
 from config import Config
+import subprocess
+from math import floor
 from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
@@ -146,6 +148,20 @@ async def CANT_CONFIG_GROUP_MSG(client, message):
     await asyncio.sleep(10)
     await ms.delete()
 
+
+
+async def get_media_duration(file_path: str) -> float:
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", file_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        return float(result.stdout.strip())
+    except Exception:
+        return 1.0  # Default duration if unable to fetch
+
 async def Compress_Stats(e, userid):
     if int(userid) not in [e.from_user.id, 0]:
         return await e.answer(
@@ -160,8 +176,7 @@ async def Compress_Stats(e, userid):
         # Get file details
         input_size = Path(inp).stat().st_size
         output_size = Path(outp).stat().st_size
-        total_time = await mediainfo(inp, get_duration=True)
-        total_time = float(total_time) if isinstance(total_time, str) else 1.0
+        total_time = await get_media_duration(inp)
 
         # Calculate progress
         encoding_progress = (output_size / input_size) * 100
@@ -172,7 +187,7 @@ async def Compress_Stats(e, userid):
 ‣ <b>Status:</b> <i>Compressing</i>
 <code>[{bar}]</code> {encoding_progress:.2f}%
 ‣ <b>Size:</b> {humanbytes(output_size)} out of {humanbytes(input_size)}
-‣ <b>Time Left:</b> {convert(eta)}"""
+‣ <b>Time Left:</b> {convertTime(eta)}"""
         
         await e.answer(progress_str, cache_time=0, show_alert=True)
     
