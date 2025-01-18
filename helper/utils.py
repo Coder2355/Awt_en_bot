@@ -16,7 +16,6 @@ from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 
-
 QUEUE = []
 
 user_operations = {}
@@ -152,17 +151,28 @@ async def Compress_Stats(e, userid):
     if int(userid) not in [e.from_user.id, 0]:
         return await e.answer(f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", show_alert=True)
     
-    inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
-    outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
-
     try:
+        # Input and output file paths
+        inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
+        outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
+        
+        # Ensure input file exists
+        if not Path(inp).exists():
+            raise FileNotFoundError(f"Input file not found: {inp}")
+
+        # Input file size
         input_size = Path(inp).stat().st_size
         start_time = time.time()
-        
+
         while True:
-            # Get the current size of the output file
-            current_size = Path(outp).stat().st_size if Path(outp).exists() else 0
-            percent = (current_size / input_size) * 100 if input_size else 0
+            # Check if output file exists
+            if not Path(outp).exists():
+                current_size = 0
+            else:
+                current_size = Path(outp).stat().st_size
+
+            # Calculate progress
+            percent = (current_size / input_size) * 100 if input_size > 0 else 0
 
             # Calculate speed and estimated time remaining
             elapsed_time = time.time() - start_time
@@ -170,21 +180,22 @@ async def Compress_Stats(e, userid):
             remaining_time = (input_size - current_size) / speed if speed > 0 else 0
 
             # Generate progress bar
-            progress_bar_length = 20  # Adjust length as needed
+            progress_bar_length = 20
             completed_length = int(progress_bar_length * percent / 100)
             progress_bar = "█" * completed_length + "░" * (progress_bar_length - completed_length)
 
             # Format values
             percent_formatted = f"{percent:.2f}"
-            speed_formatted = f"{humanbytes(speed)}/s"
+            speed_formatted = f"{humanbytes1(speed)}/s"
             elapsed_formatted = time.strftime("%M:%S", time.gmtime(elapsed_time))
             remaining_formatted = time.strftime("%M:%S", time.gmtime(remaining_time))
-            downloaded_size = humanbytes(current_size)
-            total_size = humanbytes(input_size)
+            downloaded_size = humanbytes1(current_size)
+            total_size = humanbytes1(input_size)
 
-            # Prepare the progress message
+            # Prepare progress message
             progress_message = (
                 f"▶️ **Ongoing - Encoding**\n\n"
+                f"📺 **Anime Name**: [Your Anime Title]\n"
                 f"📄 **Status**: Encoding\n"
                 f"📊 **Progress**: `{percent_formatted}%`\n"
                 f"[{progress_bar}] {percent_formatted}%\n"
@@ -194,23 +205,25 @@ async def Compress_Stats(e, userid):
                 f"⌛ **Time Left**: {remaining_formatted}"
             )
 
-            # Send the message
+            # Send progress message
             await e.answer(progress_message, cache_time=0, show_alert=True)
 
-            # Break loop when done
+            # Break loop if encoding is complete
             if percent >= 100:
                 break
 
-            # Sleep for a short while to prevent spamming updates
+            # Wait for a short interval before updating
             await asyncio.sleep(1)
 
+    except FileNotFoundError as fnf_error:
+        print(fnf_error)
+        await e.answer("Error: Input file not found. Please upload the media again.", cache_time=0, show_alert=True)
     except Exception as er:
-        print(er)
-        await e.answer(
-            "Something Went Wrong.\nSend Media Again.", cache_time=0, show_alert=True
-        )
+        print(f"Unexpected error: {er}")
+        await e.answer("Something went wrong.\nSend media again.", cache_time=0, show_alert=True)
 
-def humanbytes(size):
+
+def humanbytes1(size):
     """Convert bytes into human-readable format."""
     if not size:
         return "0 B"
