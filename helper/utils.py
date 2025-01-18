@@ -172,6 +172,7 @@ def progress_bar(completed, total, length=20):
     return f"[{bar}]"
 
 
+
 async def Compress_Stats(e, userid):
     if int(userid) not in [e.from_user.id, 0]:
         return await e.answer(
@@ -179,45 +180,58 @@ async def Compress_Stats(e, userid):
             show_alert=True
         )
 
-    inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
-    outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
-    
+    # Input and output paths
+    input_folder = f"ffmpeg/{e.from_user.id}/"
+    output_folder = f"encode/{e.from_user.id}/"
+    inp = os.path.join(input_folder, os.listdir(input_folder)[0])
+    outp = os.path.join(output_folder, os.listdir(output_folder)[0])
+
     try:
+        # Get file sizes
         input_size = Path(inp).stat().st_size
         output_size = Path(outp).stat().st_size
 
-        # Calculate percentage and progress bar
+        # Calculate progress for compressed file
         percentage = (output_size / input_size) * 100
         bar = progress_bar(output_size, input_size)
 
-        # Estimate time left based on progress
+        # Encoding speed
         start_time = e.message.date.timestamp()
         elapsed_time = time.time() - start_time
-        speed = output_size / elapsed_time if elapsed_time > 0 else 0
-        time_left = (input_size - output_size) / speed if speed > 0 else 0
+        encoding_speed = output_size / elapsed_time if elapsed_time > 0 else 0  # Bytes per second
+        encoding_speed_human = humanbytes(encoding_speed) + "/s"
 
-        # Formatting outputs
-        ot = humanbytes(output_size)
-        ov = humanbytes(input_size)
+        # Time left
+        remaining_size = input_size - output_size
+        time_left = remaining_size / encoding_speed if encoding_speed > 0 else 0
         time_left_formatted = TimeFormatter(time_left)
 
+        # Formatting outputs
+        compressed_size = humanbytes(output_size)
+        original_size = humanbytes(input_size)
+
         ans = (
-            f"**Progress**: {percentage:.2f}%\n"
-            f"{bar}\n"
-            f"Compressed: {ot} / {ov}\n"
-            f"Time Left: {time_left_formatted}"
+            f"**Encoding Status:**\n"
+            f"**File**: `{inp.replace(f'ffmpeg/{userid}/', '').replace('_', '')}`\n"
+            f"**Progress**: `{percentage:.2f}%`\n"
+            f"{bar}\n\n"
+            f"**Compressed Size**: `{compressed_size}`\n"
+            f"**Original Size**: `{original_size}`\n"
+            f"**Encoding Speed**: `{encoding_speed_human}`\n"
+            f"**Estimated Time Left**: `{time_left_formatted}`"
         )
 
-        # Truncate to ensure message length is under 200 characters
+        # Ensure the message length is within limits
         if len(ans) > 200:
             ans = ans[:197] + "..."
-        
+
         await e.answer(ans, cache_time=0, show_alert=True)
     except Exception as er:
         print(er)
         await e.answer(
             "Something went wrong. Please send the media again.", cache_time=0, show_alert=True
         )
+
 
 
 async def skip(e, userid):
