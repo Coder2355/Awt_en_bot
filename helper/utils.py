@@ -422,13 +422,13 @@ async def quality_encode(bot, query, c_thumb):
             per = f"{pe:.2f}%"
 
             await bot.send_document(
-                UID,
-                document=output_path,
-                thumb=c_thumb if c_thumb else None,
-                caption=f"**{res}** - {Config.caption.format(filename, humanbytes(org), humanbytes(com), per)}",
-                progress=progress_for_pyrogram,
-                progress_args=(f"⚠️__**Uploading {res} file...**__", ms, time.time())
-            )
+                    UID,
+                    document=output_Path,
+                    thumb=ph_path,
+                    caption=Config.caption.format(filename, humanbytes(org), humanbytes(com) , per, x, xx, xxx),
+                    progress=progress_for_pyrogram,
+                    progress_args=("⚠️__**Please wait...**__\n🌨️ **Uᴩʟᴏᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time()))
+        
 
         # Final Cleanup
         await ms.edit("All files uploaded successfully. Cleaning up...")
