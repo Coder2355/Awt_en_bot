@@ -435,7 +435,7 @@ async def quality_encode(bot, query, c_thumb):
                     UID,
                     document=output_path,
                     thumb=ph_path,
-                    caption=Config.caption.format(filename, humanbytes(org), humanbytes(com) , per, x, xx, xxx),
+                    caption="output file",
                     progress=progress_for_pyrogram,
                     progress_args=("⚠️__**Please wait...**__\n🌨️ **Uᴩʟᴏᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time()))
         
