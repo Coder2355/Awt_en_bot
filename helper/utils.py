@@ -423,7 +423,7 @@ async def quality_encode(bot, query, c_thumb):
 
             await bot.send_document(
                     UID,
-                    document=output_Path,
+                    document=output_path,
                     thumb=ph_path,
                     caption=Config.caption.format(filename, humanbytes(org), humanbytes(com) , per, x, xx, xxx),
                     progress=progress_for_pyrogram,
