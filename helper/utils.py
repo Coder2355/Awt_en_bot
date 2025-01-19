@@ -247,9 +247,36 @@ async def Compress_Stats(e, userid):
 
 
 
+
+async def skip(e, userid):
+
+    if int(userid) not in [e.from_user.id, 0]:
+        return await e.answer(f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ ᴄᴀɴᴄᴇʟ ᴛʜᴇ ᴘʀᴏᴄᴇss ᴀs ʏᴏᴜ ᴅɪᴅɴ'ᴛ sᴛᴀʀᴛ ɪᴛ", show_alert=True)
+    try:
+        await e.message.delete()
+        os.system(f"rm -rf ffmpeg/{userid}*")
+        os.system(f"rm -rf encode/{userid}*")
+        for proc in psutil.process_iter():
+            processName = proc.name()
+            processID = proc.pid
+            print(processName , ' - ', processID)
+            if(processName == "ffmpeg"):
+             os.kill(processID,signal.SIGKILL)
+    except Exception as e:
+        pass
+    try:
+        shutil.rmtree(f'ffmpeg' + '/' + str(userid))
+        shutil.rmtree(f'encode' + '/' + str(userid))
+    except Exception as e:
+        pass
+    
+    return
+
+
+
 async def update_progress_bar(ms, progress, size_done, size_total, speed, elapsed, time_left):
     """
-    Updates the encoding progress dynamically, avoiding message modification errors.
+    Updates the encoding progress dynamically every 3 seconds.
     """
     progress_bar = "█" * int(progress / 5) + "░" * (20 - int(progress / 5))
     new_content = (
@@ -260,14 +287,18 @@ async def update_progress_bar(ms, progress, size_done, size_total, speed, elapse
         f"⏳ **Time Elapsed:** {elapsed:.2f}s\n"
         f"⏱️ **Time Left:** {time_left:.2f}s"
     )
-    if ms.text != new_content:  # Only edit if the content has changed
+
+    if ms.text.strip() != new_content.strip():
         await ms.edit(new_content)
+
 
 async def process_ffmpeg_progress(process, ms, start_time, total_size):
     """
-    Parses FFmpeg progress logs and updates the progress bar.
+    Parses FFmpeg progress logs and updates the progress bar every 3 seconds.
     """
     size_done = 0
+    last_update_time = time.time()  # Track the last update time
+
     while True:
         line = await process.stdout.readline()
         if not line:
@@ -294,32 +325,12 @@ async def process_ffmpeg_progress(process, ms, start_time, total_size):
 
         time_left = (total_size - size_done) / (speed / 1024) if speed > 0 else 0  # Calculate time left
 
-        # Update the progress bar
-        await update_progress_bar(ms, progress, size_done, total_size, speed, elapsed, time_left)
+        # Update the progress bar only if 3 seconds have passed
+        current_time = time.time()
+        if current_time - last_update_time >= 3:  # 3-second interval
+            last_update_time = current_time
+            await update_progress_bar(ms, progress, size_done, total_size, speed, elapsed, time_left)
 
-async def skip(e, userid):
-
-    if int(userid) not in [e.from_user.id, 0]:
-        return await e.answer(f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ ᴄᴀɴᴄᴇʟ ᴛʜᴇ ᴘʀᴏᴄᴇss ᴀs ʏᴏᴜ ᴅɪᴅɴ'ᴛ sᴛᴀʀᴛ ɪᴛ", show_alert=True)
-    try:
-        await e.message.delete()
-        os.system(f"rm -rf ffmpeg/{userid}*")
-        os.system(f"rm -rf encode/{userid}*")
-        for proc in psutil.process_iter():
-            processName = proc.name()
-            processID = proc.pid
-            print(processName , ' - ', processID)
-            if(processName == "ffmpeg"):
-             os.kill(processID,signal.SIGKILL)
-    except Exception as e:
-        pass
-    try:
-        shutil.rmtree(f'ffmpeg' + '/' + str(userid))
-        shutil.rmtree(f'encode' + '/' + str(userid))
-    except Exception as e:
-        pass
-    
-    return
 async def quality_encode(bot, query, c_thumb):
     UID = query.from_user.id
     Download_DIR = f"ffmpeg/{UID}"
