@@ -341,118 +341,106 @@ async def quality_encode(bot, query, c_thumb):
         return await ms.edit("**⚠️ Yᴏᴜ ᴄᴀɴ ᴄᴏᴍᴘʀᴇss ᴏɴʟʏ ᴏɴᴇ ғɪʟᴇ ᴀᴛ ᴀ ᴛɪᴍᴇ\n\nAs ᴛʜɪs ʜᴇʟᴘs ʀᴇᴅᴜᴄᴇ sᴇʀᴠᴇʀ ʟᴏᴀᴅ.**")
 
     try:
+        # Set up directories
         media = query.message.reply_to_message
-        file = getattr(media , media.media.value)
-        filename = Filename(filename=str(file.file_name), mime_type=str(file.mime_type))
+        file = getattr(media, media.media.value)
+        filename = str(file.file_name)
         Download_DIR = f"ffmpeg/{UID}"
         Output_DIR = f"encode/{UID}"
-        File_Path = f"ffmpeg/{UID}/{filename}"
-        Output_Path = f"encode/{UID}/{filename}"
+        File_Path = f"{Download_DIR}/{filename}"
         
-        
+        if not os.path.isdir(Download_DIR):
+            os.makedirs(Download_DIR)
+        if not os.path.isdir(Output_DIR):
+            os.makedirs(Output_DIR)
+
+        # Download the file
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        s = dt.now()
-        try:
-            if not os.path.isdir(Download_DIR) and not os.path.isdir(Output_DIR):
-                os.makedirs(Download_DIR)
-                os.makedirs(Output_DIR)
-
-                dl = await bot.download_media(
-                    message=file,
-                    file_name=File_Path,
-                    progress=progress_for_pyrogram,
-                    progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time())
-                )
-        except Exception as e:
-            return await ms.edit(str(e))
-        
-        es = dt.now()
-        dtime = ts(int((es - s).seconds) * 1000)
-
-        await ms.edit(
-            "**🗜 Compressing...**",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='Sᴛᴀᴛs', callback_data=f'stats-{UID}')],
-                [InlineKeyboardButton(text='Cᴀɴᴄᴇʟ', callback_data=f'skip-{UID}')]
-            ])
+        dl = await bot.download_media(
+            message=file,
+            file_name=File_Path,
+            progress=progress_for_pyrogram,
+            progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time())
         )
-        
-        qualities = {
-            "480p": "-preset veryfast -c:v libx264 -crf 30 -s 144x144 -c:a aac -b:a 32k",
-            "720p": "-preset veryfast -c:v libx264 -crf 22 -s 240x240 -c:a aac -b:a 32k",
-            "1080p": "-preset veryfast -c:v libx264 -crf 20 -s 360x360 -c:a aac -b:a 32k"
+
+        resolutions = {
+            "480p": "-vf scale=854:480 -crf 28",
+            "720p": "-vf scale=1280:720 -crf 23",
+            "1080p": "-vf scale=1920:1080 -crf 20"
         }
 
-        for quality, ffmpeg_params in qualities.items():
-            
+        for res, ffmpegcode in resolutions.items():
+            output_path = f"{Output_DIR}/{res}_{filename}"
 
-            cmd = f'ffmpeg -i "{dl}" {ffmpeg_params} -progress pipe:1 "{Output_Path}" -y'
+            # Encoding
+            await ms.edit(f"**🗜 Compressing to {res}...**")
+            cmd = f"""ffmpeg -i "{dl}" {ffmpegcode} "{output_path}" -y"""
+
             process = await asyncio.create_subprocess_shell(
-            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+                cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
-        
 
-            stdout, stderr = await process.communicate()
-            er = stderr.decode()
+            total_duration = None
+            progress_message = None
 
-            try:
-                if er:
-                    await ms.edit(str(er) + "\n\n**Error**")
-                    shutil.rmtree(f"ffmpeg/{UID}")
-                    shutil.rmtree(f"encode/{UID}")
-                    return
-            except BaseException:
-                pass
-        
+            while True:
+                line = await process.stderr.readline()
+                if not line:
+                    break
 
-        # Clean up resources
-        # Now Uploading to the User
-            ees = dt.now()
-        
-            if (file.thumbs or c_thumb):
-                if c_thumb:
-                    ph_path = await bot.download_media(c_thumb)
-                else:
-                    ph_path = await bot.download_media(file.thumbs[0].file_id)
+                line = line.decode("utf-8").strip()
+                
+                # Extract duration from ffmpeg's output
+                if total_duration is None:
+                    match = re.search(r"Duration: (\d+):(\d+):(\d+\.\d+)", line)
+                    if match:
+                        hours, minutes, seconds = map(float, match.groups())
+                        total_duration = hours * 3600 + minutes * 60 + seconds
 
+                # Extract progress
+                match = re.search(r"time=(\d+):(\d+):(\d+\.\d+)", line)
+                if match and total_duration:
+                    hours, minutes, seconds = map(float, match.groups())
+                    elapsed_time = hours * 3600 + minutes * 60 + seconds
+                    progress = (elapsed_time / total_duration) * 100
+
+                    # Update progress message
+                    progress_message = f"Encoding {res}: {progress:.2f}%"
+                    await ms.edit(progress_message)
+
+            await process.wait()
+
+            if process.returncode != 0:
+                await ms.edit(f"Error during {res} compression.")
+                return
+
+            # Uploading
+            await ms.edit(f"⚠️__**Please wait...**__\n**Uploading {res} file...**")
             org = int(Path(File_Path).stat().st_size)
-            com = int((Path(Output_Path).stat().st_size))
+            com = int(Path(output_path).stat().st_size)
             pe = 100 - ((com / org) * 100)
-            per = str(f"{pe:.2f}")  + "%"
-            eees = dt.now()
-            x = dtime
-            xx = ts(int((ees - es).seconds) * 1000)
-            xxx = ts(int((eees - ees).seconds) * 1000)
-            await ms.edit("⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Uᴩʟᴏᴀᴅɪɴɢ....**")
+            per = f"{pe:.2f}%"
+
             await bot.send_document(
-                    UID,
-                    document=Output_Path,
-                    thumb=ph_path,
-                    caption=Config.caption.format(filename, humanbytes(org), humanbytes(com) , per, x, xx, xxx),
-                    progress=progress_for_pyrogram,
-                    progress_args=("⚠️__**Please wait...**__\n🌨️ **Uᴩʟᴏᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time()))
-        
-            if query.message.chat.type == enums.ChatType.SUPERGROUP:
-                botusername = await bot.get_me()
-                await ms.edit(f"Hey {query.from_user.mention},\n\nI Have Send Compressed File To Your Pm", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text="Bᴏᴛ Pᴍ", url=f'https://t.me/{botusername.username}')]]))
-            
-            else:
-                await ms.delete()
+                UID,
+                document=output_path,
+                thumb=c_thumb if c_thumb else None,
+                caption=f"**{res}** - {Config.caption.format(filename, humanbytes(org), humanbytes(com), per)}",
+                progress=progress_for_pyrogram,
+                progress_args=(f"⚠️__**Uploading {res} file...**__", ms, time.time())
+            )
 
-            try:
-                shutil.rmtree(f"ffmpeg/{UID}")
-                shutil.rmtree(f"encode/{UID}")
-                os.remove(ph_path)
-            except BaseException:
-                os.remove(f"ffmpeg/{UID}")
-                os.remove(f"ffmpeg/{UID}")
+        # Final Cleanup
+        await ms.edit("All files uploaded successfully. Cleaning up...")
+        shutil.rmtree(f"ffmpeg/{UID}")
+        shutil.rmtree(f"encode/{UID}")
 
-        
     except Exception as e:
         print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
-
-            
-            
+        if os.path.isdir(f"ffmpeg/{UID}"):
+            shutil.rmtree(f"ffmpeg/{UID}")
+        if os.path.isdir(f"encode/{UID}"):
+            shutil.rmtree(f"encode/{UID}")            
             
             
 
