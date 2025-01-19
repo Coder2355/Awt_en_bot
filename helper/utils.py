@@ -426,10 +426,8 @@ async def quality_encode(bot, query, c_thumb):
             com = int(Path(output_path).stat().st_size)
             pe = 100 - ((com / org) * 100)
             per = f"{pe:.2f}%"
-            eees = dt.now()
-            x = dtime
-            xx = ts(int((ees - es).seconds) * 1000)
-            xxx = ts(int((eees - ees).seconds) * 1000)
+          
+            
 
             await bot.send_document(
                     UID,
