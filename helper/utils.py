@@ -376,9 +376,9 @@ async def quality_encode(bot, query, c_thumb):
         )
         
         qualities = {
-            "480p": "-preset veryfast -c:v libx264 -crf 30 -s 640x480 -c:a aac -b:a 128k",
-            "720p": "-preset veryfast -c:v libx264 -crf 22 -s 1280x720 -c:a aac -b:a 128k",
-            "1080p": "-preset veryfast -c:v libx264 -crf 20 -s 1920x1080 -c:a aac -b:a 128k"
+            "480p": "-preset veryfast -c:v libx264 -crf 30 -s 144x144 -c:a aac -b:a 32k",
+            "720p": "-preset veryfast -c:v libx264 -crf 22 -s 240x240 -c:a aac -b:a 32k",
+            "1080p": "-preset veryfast -c:v libx264 -crf 20 -s 360x360 -c:a aac -b:a 32k"
         }
 
         for quality, ffmpeg_params in qualities.items():
