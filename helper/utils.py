@@ -249,10 +249,10 @@ async def Compress_Stats(e, userid):
 
 async def update_progress_bar(ms, progress, size_done, size_total, speed, elapsed, time_left):
     """
-    Updates the encoding progress dynamically.
+    Updates the encoding progress dynamically, avoiding message modification errors.
     """
     progress_bar = "█" * int(progress / 5) + "░" * (20 - int(progress / 5))
-    await ms.edit(
+    new_content = (
         f"⚠️ **Encoding...**\n"
         f"Progress: [{progress_bar}] {progress:.2f}%\n\n"
         f"📦 **Size:** {size_done:.2f} MB out of ~ {size_total:.2f} MB\n"
@@ -260,6 +260,8 @@ async def update_progress_bar(ms, progress, size_done, size_total, speed, elapse
         f"⏳ **Time Elapsed:** {elapsed:.2f}s\n"
         f"⏱️ **Time Left:** {time_left:.2f}s"
     )
+    if ms.text != new_content:  # Only edit if the content has changed
+        await ms.edit(new_content)
 
 async def process_ffmpeg_progress(process, ms, start_time, total_size):
     """
