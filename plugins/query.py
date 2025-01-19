@@ -5,7 +5,7 @@ import sys
 import humanize
 from pyrogram import Client, filters
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from helper.utils import Compress_Stats, skip, CompressVideo, user_operations
+from helper.utils import Compress_Stats, skip, CompressVideo, user_operations, quality_encode
 from helper.database import db
 from script import Txt
 
@@ -136,6 +136,11 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
 
         except Exception as e:
             print(e)
+    elif data == '3quality':
+        try:
+            c_thumb = await db.get_thumbnail(query.from_user.id)
+            await quality_encode(bot=bot, query=query, c_thumb=c_thumb)
+
 
     elif data == 'custompc':
 
