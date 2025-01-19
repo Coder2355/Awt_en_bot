@@ -273,8 +273,7 @@ async def skip(e, userid):
     return
 
 
-
-async def update_progress_bar(ms, progress, size_done, size_total, speed, elapsed, time_left):
+async def update_progress_bar(ms, progress, size_done, size_total, estimated_size, speed, elapsed, time_left):
     """
     Updates the encoding progress dynamically every 3 seconds.
     """
@@ -282,10 +281,11 @@ async def update_progress_bar(ms, progress, size_done, size_total, speed, elapse
     new_content = (
         f"⚠️ **Encoding...**\n"
         f"Progress: [{progress_bar}] {progress:.2f}%\n\n"
-        f"📦 **Size:** {size_done:.2f} MB out of ~ {size_total:.2f} MB\n"
+        f"📦 **Size:** {size_done:.2f} MB out of ~ {estimated_size:.2f} MB\n"
         f"⚡ **Speed:** {speed:.2f} KB/s\n"
         f"⏳ **Time Elapsed:** {elapsed:.2f}s\n"
-        f"⏱️ **Time Left:** {time_left:.2f}s"
+        f"⏱️ **Time Left:** {time_left:.2f}s\n"
+        f"📦 **Total Input Size:** {size_total:.2f} MB"
     )
 
     if ms.text.strip() != new_content.strip():
@@ -297,7 +297,7 @@ async def process_ffmpeg_progress(process, ms, start_time, total_size):
     Parses FFmpeg progress logs and updates the progress bar every 3 seconds.
     """
     size_done = 0
-    last_update_time = time.time()  # Track the last update time
+    last_update_time = time.time()
 
     while True:
         line = await process.stdout.readline()
@@ -309,42 +309,43 @@ async def process_ffmpeg_progress(process, ms, start_time, total_size):
         size_match = re.search(r"total_size=(\d+)", decoded_line)
         speed_match = re.search(r"speed=([\d\.]+)x", decoded_line)
 
-        # Extract values from FFmpeg log
         elapsed = 0
         progress = 0
         speed = 0
+        estimated_size = total_size * 0.85  # Estimate output size as 85% of input size
+
         if time_match:
             elapsed = int(time_match.group(1)) / 1_000_000  # Convert to seconds
-            progress = (elapsed / (elapsed + 1)) * 100  # Example percentage logic
+            progress = min((elapsed / (elapsed + 1)) * 100, 100)  # Example percentage logic
+
         if size_match:
             size_done = int(size_match.group(1)) / (1024 * 1024)  # Convert bytes to MB
+
         if speed_match:
             speed = float(speed_match.group(1)) * total_size  # Approximate speed in KB/s
-        else:
-            speed = 0
 
-        time_left = (total_size - size_done) / (speed / 1024) if speed > 0 else 0  # Calculate time left
+        time_left = (estimated_size - size_done) / (speed / 1024) if speed > 0 else 0
 
         # Update the progress bar only if 3 seconds have passed
         current_time = time.time()
         if current_time - last_update_time >= 3:  # 3-second interval
             last_update_time = current_time
-            await update_progress_bar(ms, progress, size_done, total_size, speed, elapsed, time_left)
+            await update_progress_bar(ms, progress, size_done, total_size, estimated_size, speed, elapsed, time_left)
+
 
 async def quality_encode(bot, query, c_thumb):
     UID = query.from_user.id
     Download_DIR = f"ffmpeg/{UID}"
     Output_DIR = f"encode/{UID}"
     File_Path = f"{Download_DIR}/input_video"
-        
+
     if not os.path.isdir(Download_DIR):
         os.makedirs(Download_DIR)
     if not os.path.isdir(Output_DIR):
         os.makedirs(Output_DIR)
 
-        # Notify the user that the process is starting
     ms = await query.message.edit("⚠️__**Please wait...**__\n\n**Downloading video...**")
-        
+
     try:
         media = query.message.reply_to_message
         file = getattr(media, media.media.value)
@@ -355,37 +356,37 @@ async def quality_encode(bot, query, c_thumb):
             progress_args=("\n⚠️__**Downloading...**__", ms, time.time())
         )
 
-        # Define FFmpeg commands for each quality
+        print(f"File downloaded to: {dl}")
+        if not os.path.exists(dl):
+            raise FileNotFoundError("Download failed or file path is incorrect.")
+
+        total_size = os.path.getsize(dl) / (1024 * 1024)  # Input file size in MB
+
         qualities = {
-            "480p": "-preset veryfast -c:v libx264 -crf 30 -s 240x144 -c:a aac -b:a 128k",
-            "720p": "-preset veryfast -c:v libx264 -crf 22 -s 240x240 -c:a aac -b:a 128k",
-            "1080p": "-preset veryfast -c:v libx264 -crf 20 -s 360x360 -c:a aac -b:a 128k"
+            "480p": "-preset veryfast -c:v libx264 -crf 30 -s 640x480 -c:a aac -b:a 128k",
+            "720p": "-preset veryfast -c:v libx264 -crf 22 -s 1280x720 -c:a aac -b:a 128k",
+            "1080p": "-preset veryfast -c:v libx264 -crf 20 -s 1920x1080 -c:a aac -b:a 128k"
         }
 
         for quality, ffmpeg_params in qualities.items():
             await ms.edit(f"🗜 **Compressing to {quality}...**")
             output_path = f"{Output_DIR}/{quality}_video.mp4"
 
-            # FFmpeg command with progress tracking
             cmd = f'ffmpeg -i "{dl}" {ffmpeg_params} -progress pipe:1 "{output_path}" -y'
+            print(f"Running command: {cmd}")
             process = await asyncio.create_subprocess_shell(
                 cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
 
             start_time = time.time()
-            total_size = os.path.getsize(dl) / (1024 * 1024)  # Total size in MB
-
-            # Pass FFmpeg progress tracking to the helper function
             await process_ffmpeg_progress(process, ms, start_time, total_size)
 
             stdout, stderr = await process.communicate()
 
-            # Check for errors
             if process.returncode != 0:
                 await ms.edit(f"❌ Error compressing to {quality}:\n{stderr.decode()}")
                 return
 
-            # Upload the compressed video
             await ms.edit(f"⚠️__**Uploading {quality}...**__")
             await bot.send_document(
                 UID,
@@ -396,17 +397,15 @@ async def quality_encode(bot, query, c_thumb):
                 progress_args=(f"⚠️__**Uploading {quality}...**__", ms, time.time())
             )
 
-        # Notify completion
         await ms.edit("✅ **All qualities compressed and uploaded successfully!**")
-
-        # Cleanup
         shutil.rmtree(Download_DIR)
         shutil.rmtree(Output_DIR)
 
     except Exception as e:
-        print(f"Error: {e}")
-        await query.message.edit(f"❌ **An error occurred:** {e}")
-
+        import traceback
+        print(f"Error: {traceback.format_exc()}")
+        await query.message.edit(f"❌ **An error occurred:** {e}")          
+            
 
 async def CompressVideo(bot, query, ffmpegcode, c_thumb):
     UID = query.from_user.id
