@@ -364,9 +364,9 @@ async def quality_encode(bot, query, c_thumb):
         )
 
         resolutions = {
-            "480p": "-vf scale=854:480 -crf 28",
-            "720p": "-vf scale=1280:720 -crf 23",
-            "1080p": "-vf scale=1920:1080 -crf 20"
+            "480p": "-vf scale=144:144 -crf 30",
+            "720p": "-vf scale=240:240 -crf 30",
+            "1080p": "-vf scale=360:360 -crf 30"
         }
 
         for res, ffmpegcode in resolutions.items():
