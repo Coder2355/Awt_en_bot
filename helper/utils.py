@@ -446,8 +446,8 @@ async def quality_encode(bot, query, c_thumb):
                 os.remove(f"ffmpeg/{UID}")
 
         
-        except Exception as e:
-            print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+    except Exception as e:
+        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
 
             
             
