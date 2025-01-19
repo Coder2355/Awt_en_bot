@@ -386,7 +386,7 @@ async def quality_encode(bot, query, c_thumb):
         for quality, ffmpeg_params in qualities.items():
             
 
-            cmd = f'ffmpeg -i "{dl}" {ffmpeg_params} -progress pipe:1 "{output_path}" -y'
+            cmd = f'ffmpeg -i "{dl}" {ffmpeg_params} -progress pipe:1 "{Output_Path}" -y'
             process = await asyncio.create_subprocess_shell(
             cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
