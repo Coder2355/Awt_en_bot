@@ -91,7 +91,7 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
                 [InlineKeyboardButton(text='480ᴘ', callback_data='480pc'), InlineKeyboardButton(
                     text='720ᴘ', callback_data='720pc')],
                 [InlineKeyboardButton(text='1080ᴘ', callback_data='1080pc'), InlineKeyboardButton(
-                    text='4ᴋ', callback_data='2160pc')],
+                    text='4ᴋ', callback_data='3kc')],
                 [InlineKeyboardButton(
                     text='Cᴜsᴛᴏᴍ Eɴᴄᴏᴅɪɴɢ 🗜️', callback_data='custompc')],
                 [InlineKeyboardButton(text='✘ Cʟᴏꜱᴇ', callback_data='close'), InlineKeyboardButton(
@@ -136,7 +136,7 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
 
         except Exception as e:
             print(e)
-    elif data == '3quality':
+    elif data == '3kc':
         try:
             c_thumb = await db.get_thumbnail(query.from_user.id)
             await quality_encode(bot=bot, query=query, c_thumb=c_thumb)
