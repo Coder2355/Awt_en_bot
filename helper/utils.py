@@ -6,6 +6,7 @@ import sys
 import shutil
 import signal
 import os
+import re
 from pathlib import Path
 from datetime import datetime
 import psutil
