@@ -416,10 +416,10 @@ async def quality_encode(bot, query, c_thumb):
 
             # Uploading
             if (file.thumbs or c_thumb):
-            if c_thumb:
-                ph_path = await bot.download_media(c_thumb)
-            else:
-                ph_path = await bot.download_media(file.thumbs[0].file_id)
+                if c_thumb:
+                    ph_path = await bot.download_media(c_thumb)
+                else:
+                    ph_path = await bot.download_media(file.thumbs[0].file_id)
 
             await ms.edit(f"⚠️__**Please wait...**__\n**Uploading {res} file...**")
             org = int(Path(File_Path).stat().st_size)
