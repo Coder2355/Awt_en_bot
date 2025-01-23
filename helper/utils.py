@@ -388,8 +388,7 @@ async def quality_encode(bot, query, c_thumb):
         for res, ffmpegcode in resolutions.items():
             output_path = f"{Output_DIR}/{res}_{filename}"
 
-            # Encoding
-            await ms.edit(f"**🗜 Compressing to {res}...**")
+            
             cmd = f"""ffmpeg -i "{dl}" {ffmpegcode} "{output_path}" -y"""
 
             process = await asyncio.create_subprocess_shell(
