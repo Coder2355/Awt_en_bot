@@ -356,6 +356,7 @@ async def quality_encode(bot, query, c_thumb):
 
         # Download the file
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
+        s = dt.now()
         dl = await bot.download_media(
             message=file,
             file_name=File_Path,
@@ -363,6 +364,20 @@ async def quality_encode(bot, query, c_thumb):
             progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time())
         )
 
+        except Exception as e:
+            return await ms.edit(str(e))
+        
+        es = dt.now()
+        dtime = ts(int((es - s).seconds) * 1000)
+
+        await ms.edit(
+            "**🗜 Compressing...**",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(text='Sᴛᴀᴛs', callback_data=f'stats-{UID}')],
+                [InlineKeyboardButton(text='Cᴀɴᴄᴇʟ', callback_data=f'skip-{UID}')]
+            ])
+        )
+        
         resolutions = {
             "480p": "-vf scale=144:144 -crf 30",
             "720p": "-vf scale=240:240 -crf 30",
@@ -380,39 +395,17 @@ async def quality_encode(bot, query, c_thumb):
                 cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
 
-            total_duration = None
-            progress_message = None
+            stdout, stderr = await process.communicate()
+            er = stderr.decode()
 
-            while True:
-                line = await process.stderr.readline()
-                if not line:
-                    break
-
-                line = line.decode("utf-8").strip()
-                
-                # Extract duration from ffmpeg's output
-                if total_duration is None:
-                    match = re.search(r"Duration: (\d+):(\d+):(\d+\.\d+)", line)
-                    if match:
-                        hours, minutes, seconds = map(float, match.groups())
-                        total_duration = hours * 3600 + minutes * 60 + seconds
-
-                # Extract progress
-                match = re.search(r"time=(\d+):(\d+):(\d+\.\d+)", line)
-                if match and total_duration:
-                    hours, minutes, seconds = map(float, match.groups())
-                    elapsed_time = hours * 3600 + minutes * 60 + seconds
-                    progress = (elapsed_time / total_duration) * 100
-
-                    # Update progress message
-                    progress_message = f"Encoding {res}: {progress:.2f}%"
-                    await message.reply(progress_message)
-
-            await process.wait()
-
-            if process.returncode != 0:
-                await ms.edit(f"Error during {res} compression.")
-                return
+            try:
+                if er:
+                    await ms.edit(str(er) + "\n\n**Error**")
+                    shutil.rmtree(f"ffmpeg/{UID}")
+                    shutil.rmtree(f"encode/{UID}")
+                    return
+            except BaseException:
+                pass
 
             # Uploading
             if (file.thumbs or c_thumb):
