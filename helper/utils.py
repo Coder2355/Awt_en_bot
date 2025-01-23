@@ -357,12 +357,13 @@ async def quality_encode(bot, query, c_thumb):
         # Download the file
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
         s = dt.now()
-        dl = await bot.download_media(
-            message=file,
-            file_name=File_Path,
-            progress=progress_for_pyrogram,
-            progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time())
-        )
+        try:
+            dl = await bot.download_media(
+                message=file,
+                file_name=File_Path,
+                progress=progress_for_pyrogram,
+                progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time())
+            )
 
         except Exception as e:
             return await ms.edit(str(e))
@@ -404,8 +405,8 @@ async def quality_encode(bot, query, c_thumb):
                     shutil.rmtree(f"ffmpeg/{UID}")
                     shutil.rmtree(f"encode/{UID}")
                     return
-           except BaseException:
-               pass
+            except BaseException:
+                pass
 
             # Uploading
             if (file.thumbs or c_thumb):
