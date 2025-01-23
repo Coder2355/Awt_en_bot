@@ -406,7 +406,7 @@ async def quality_encode(bot, query, c_thumb):
 
                     # Update progress message
                     progress_message = f"Encoding {res}: {progress:.2f}%"
-                    await ms.edit(progress_message)
+                    await message.reply(progress_message)
 
             await process.wait()
 
