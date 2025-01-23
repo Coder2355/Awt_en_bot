@@ -404,8 +404,8 @@ async def quality_encode(bot, query, c_thumb):
                     shutil.rmtree(f"ffmpeg/{UID}")
                     shutil.rmtree(f"encode/{UID}")
                     return
-            except BaseException:
-                pass
+           except BaseException:
+               pass
 
             # Uploading
             if (file.thumbs or c_thumb):
