@@ -219,7 +219,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         # FFmpeg command with progress pipe
         cmd = [
             "ffmpeg",
-            "-i", dl,
+            "-i", File_Path,
             *ffmpegcode.split(),
             "-progress", "pipe:1",
             "-y", Output_Path
