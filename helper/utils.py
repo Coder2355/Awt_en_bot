@@ -6,15 +6,11 @@ import sys
 import shutil
 import signal
 import os
-import re
 from pathlib import Path
 from datetime import datetime
 import psutil
-from pathlib import Path
 from pytz import timezone
 from config import Config
-import subprocess
-from math import floor
 from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
@@ -22,13 +18,12 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMedi
 
 QUEUE = []
 
-user_operations = {}
 
 
 async def progress_for_pyrogram(current, total, ud_type, message, start):
     now = time.time()
     diff = now - start
-    if round(diff % 5.00) == 0 or current == total:
+    if round(diff % 5.00) == 0 or current == total:        
         percentage = current * 100 / total
         speed = current / diff
         elapsed_time = round(diff) * 1000
@@ -41,28 +36,20 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
         progress = "{0}{1}".format(
             ''.join(["⬢" for i in range(math.floor(percentage / 5))]),
             ''.join(["⬡" for i in range(20 - math.floor(percentage / 5))])
-        )
-        tmp = progress + Txt.PROGRESS_BAR.format(
+        )            
+        tmp = progress + Txt.PROGRESS_BAR.format( 
             round(percentage, 2),
             humanbytes(current),
             humanbytes(total),
-            humanbytes(speed),
+            humanbytes(speed),            
             estimated_total_time if estimated_total_time != '' else "0 s"
         )
-
         try:
-            # Store the operation in the user_operations dictionary
-            user_operations[message.chat.id] = message
-
-            # Update the progress message
             await message.edit(
-                text=f"{ud_type}\n\n{tmp}",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("✖️ 𝙲𝙰𝙽𝙲𝙴𝙻 ✖️", callback_data=f"close-{message.chat.id}")]]
-                )
+                text=f"{ud_type}\n\n{tmp}",               
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✖️ 𝙲𝙰𝙽𝙲𝙴𝙻 ✖️", callback_data=f"close-{message.from_user.id}")]])                                               
             )
-        except Exception as e:
-            print(e)
+        except:
             pass
 
 def humanbytes(size):    
@@ -150,103 +137,25 @@ async def CANT_CONFIG_GROUP_MSG(client, message):
     await ms.delete()
 
 
-import math
-import time
-
-
-def format_time(seconds):
-    """Convert seconds into a human-readable format."""
-    mins, secs = divmod(int(seconds), 60)
-    hours, mins = divmod(mins, 60)
-    if hours > 0:
-        return f"{hours}h {mins}m {secs}s"
-    elif mins > 0:
-        return f"{mins}m {secs}s"
-    else:
-        return f"{secs}s"
-
-
-def progress_bar(completed, total, length=20):
-    """Generate a progress bar."""
-    progress = math.floor(length * completed / total)
-    bar = "█" * progress + "░" * (length - progress)
-    return f"[{bar}]"
-
-
-
-
 async def Compress_Stats(e, userid):
+
+
     if int(userid) not in [e.from_user.id, 0]:
-        return await e.answer(
-            f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", 
-            show_alert=True
-        )
-
-    # Input and output paths
-    input_folder = f"ffmpeg/{e.from_user.id}/"
-    output_folder = f"encode/{e.from_user.id}/"
-    inp = os.path.join(input_folder, os.listdir(input_folder)[0])
-    outp = os.path.join(output_folder, os.listdir(output_folder)[0])
-
+        return await e.answer(f"⚠️ Hᴇʏ {e.from_user.first_name}\nYᴏᴜ ᴄᴀɴ'ᴛ sᴇᴇ sᴛᴀᴛᴜs ᴀs ᴛʜɪs ɪs ɴᴏᴛ ʏᴏᴜʀ ғɪʟᴇ", show_alert=True)
+    
+    inp = f"ffmpeg/{e.from_user.id}/{os.listdir(f'ffmpeg/{e.from_user.id}')[0]}"
+    outp = f"encode/{e.from_user.id}/{os.listdir(f'encode/{e.from_user.id}')[0]}"
     try:
-        # Get input file size
-        input_size = Path(inp).stat().st_size
-        
-        # Check if output file exists before encoding starts
-        output_size_before = Path(outp).stat().st_size if Path(outp).exists() else 0
-        
-        # Calculate progress for compressed file
-        # If output file exists, calculate progress
-        output_size = Path(outp).stat().st_size if Path(outp).exists() else 0
-        percentage = (output_size / input_size) * 100 if input_size > 0 else 0
-        bar = progress_bar(output_size, input_size)
-
-        # Encoding speed (calculating based on elapsed time)
-        start_time = e.message.date.timestamp()
-        elapsed_time = time.time() - start_time
-        encoding_speed = output_size / elapsed_time if elapsed_time > 0 else 0  # Bytes per second
-        encoding_speed_human = humanbytes(encoding_speed) + "/s"
-
-        # Time left (remaining size / encoding speed)
-        remaining_size = input_size - output_size
-        time_left = remaining_size / encoding_speed if encoding_speed > 0 else 0
-        time_left_formatted = TimeFormatter(time_left)
-
-        # Formatting output values
-        compressed_size = humanbytes(output_size)
-        original_size = humanbytes(input_size)
-        output_size_before_human = humanbytes(output_size_before)
-
-        # Estimate the compressed size if the process isn't finished
-        estimated_compressed_size = humanbytes(output_size_before)  # Before encoding starts
-
-        ans = (
-            f"**Encoding Status:**\n"
-            f"**File**: `{inp.replace(f'ffmpeg/{userid}/', '').replace('_', '')}`\n"
-            f"**Progress**: `{percentage:.2f}%`\n"
-            f"{bar}\n\n"
-            f"**Compressed Size Before Encoding**: `{output_size_before_human}`\n"
-            f"**Compressed Size Now**: `{compressed_size}`\n"
-            f"**Original Size**: `{original_size}`\n"
-            f"**Estimated Compressed Size**: `{estimated_compressed_size}`\n"
-            f"**Encoding Speed**: `{encoding_speed_human}`\n"
-            f"**Estimated Time Left**: `{time_left_formatted}`"
-        )
-
-        # Ensure the message length is within limits
-        if len(ans) > 200:
-            ans = ans[:197] + "..."
-
+        ot = humanbytes(int((Path(outp).stat().st_size)))
+        ov = humanbytes(int(Path(inp).stat().st_size))
+        processing_file_name = inp.replace(f"ffmpeg/{userid}/", "").replace(f"_", "")
+        ans = f"Processing Media: {processing_file_name}\n\nDownloaded: {ov}\n\nCompressed: {ot}"
         await e.answer(ans, cache_time=0, show_alert=True)
-
     except Exception as er:
         print(er)
         await e.answer(
-            "Something went wrong. Please send the media again.", cache_time=0, show_alert=True
+            "Someting Went Wrong.\nSend Media Again.", cache_time=0, alert=True
         )
-
-
-
 
 async def skip(e, userid):
 
@@ -272,179 +181,115 @@ async def skip(e, userid):
     
     return
 
-
-async def update_progress_bar(ms, progress, size_done, size_total, estimated_size, speed, elapsed, time_left):
-    """
-    Updates the encoding progress dynamically every 3 seconds.
-    """
-    progress_bar = "█" * int(progress / 5) + "░" * (20 - int(progress / 5))
-    new_content = (
-        f"⚠️ **Encoding...**\n"
-        f"Progress: [{progress_bar}] {progress:.2f}%\n\n"
-        f"📦 **Size:** {size_done:.2f} MB out of ~ {estimated_size:.2f} MB\n"
-        f"⚡ **Speed:** {speed:.2f} KB/s\n"
-        f"⏳ **Time Elapsed:** {elapsed:.2f}s\n"
-        f"⏱️ **Time Left:** {time_left:.2f}s\n"
-        f"📦 **Total Input Size:** {size_total:.2f} MB"
-    )
-
-    if ms.text.strip() != new_content.strip():
-        await ms.edit(new_content)
-
-
-async def process_ffmpeg_progress(process, ms, start_time, total_size):
-    """
-    Parses FFmpeg progress logs and updates the progress bar every 3 seconds.
-    """
-    size_done = 0
-    last_update_time = time.time()
-
-    while True:
-        line = await process.stdout.readline()
-        if not line:
-            break
-
-        decoded_line = line.decode("utf-8").strip()
-        time_match = re.search(r"out_time_ms=(\d+)", decoded_line)
-        size_match = re.search(r"total_size=(\d+)", decoded_line)
-        speed_match = re.search(r"speed=([\d\.]+)x", decoded_line)
-
-        elapsed = 0
-        progress = 0
-        speed = 0
-        estimated_size = total_size * 0.85  # Estimate output size as 85% of input size
-
-        if time_match:
-            elapsed = int(time_match.group(1)) / 1_000_000  # Convert to seconds
-            progress = min((elapsed / (elapsed + 1)) * 100, 100)  # Example percentage logic
-
-        if size_match:
-            size_done = int(size_match.group(1)) / (1024 * 1024)  # Convert bytes to MB
-
-        if speed_match:
-            speed = float(speed_match.group(1)) * total_size  # Approximate speed in KB/s
-
-        time_left = (estimated_size - size_done) / (speed / 1024) if speed > 0 else 0
-
-        # Update the progress bar only if 3 seconds have passed
-        current_time = time.time()
-        if current_time - last_update_time >= 3:  # 3-second interval
-            last_update_time = current_time
-            await update_progress_bar(ms, progress, size_done, total_size, estimated_size, speed, elapsed, time_left)
-
-
-async def quality_encode(bot, query, c_thumb):
+async def quality_encode(bot, query, ffmpegcode, c_thumb):
     UID = query.from_user.id
     ms = await query.message.edit('Pʟᴇᴀsᴇ Wᴀɪᴛ...\n\n**Fᴇᴛᴄʜɪɴɢ Qᴜᴇᴜᴇ 👥**')
-    
+
     if os.path.isdir(f'ffmpeg/{UID}') and os.path.isdir(f'encode/{UID}'):
         return await ms.edit("**⚠️ Yᴏᴜ ᴄᴀɴ ᴄᴏᴍᴘʀᴇss ᴏɴʟʏ ᴏɴᴇ ғɪʟᴇ ᴀᴛ ᴀ ᴛɪᴍᴇ\n\nAs ᴛʜɪs ʜᴇʟᴘs ʀᴇᴅᴜᴄᴇ sᴇʀᴠᴇʀ ʟᴏᴀᴅ.**")
 
     try:
-        # Set up directories
         media = query.message.reply_to_message
         file = getattr(media, media.media.value)
-        filename = str(file.file_name)
+        filename = file.file_name
         Download_DIR = f"ffmpeg/{UID}"
         Output_DIR = f"encode/{UID}"
         File_Path = f"{Download_DIR}/{filename}"
-        
+        Output_Path = f"{Output_DIR}/{filename}"
+
         if not os.path.isdir(Download_DIR):
             os.makedirs(Download_DIR)
         if not os.path.isdir(Output_DIR):
             os.makedirs(Output_DIR)
 
-        # Download the file
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        s = dt.now()
-        try:
-            dl = await bot.download_media(
-                message=file,
-                file_name=File_Path,
-                progress=progress_for_pyrogram,
-                progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time())
-            )
-
-        except Exception as e:
-            return await ms.edit(str(e))
-        
-        es = dt.now()
-        dtime = ts(int((es - s).seconds) * 1000)
-
-        await ms.edit(
-            "**🗜 Compressing...**",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(text='Sᴛᴀᴛs', callback_data=f'stats-{UID}')],
-                [InlineKeyboardButton(text='Cᴀɴᴄᴇʟ', callback_data=f'skip-{UID}')]
-            ])
+        start_time = time()
+        dl = await bot.download_media(
+            message=file,
+            file_name=File_Path,
+            progress=progress_for_pyrogram,
+            progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, start_time)
         )
-        
-        resolutions = {
-            "480p": "-vf scale=144:144 -crf 30",
-            "720p": "-vf scale=240:240 -crf 30",
-            "1080p": "-vf scale=360:360 -crf 30"
-        }
 
-        for res, ffmpegcode in resolutions.items():
-            output_path = f"{Output_DIR}/{res}_{filename}"
+        await ms.edit("🗜 **Compressing...**")
+        duration = media.video.duration if hasattr(media, "video") and media.video else 0
+        original_size = os.path.getsize(File_Path) / (1024 * 1024)
 
-            
-            cmd = f"""ffmpeg -i "{dl}" {ffmpegcode} "{output_path}" -y"""
+        # FFmpeg command with progress pipe
+        cmd = f"""ffmpeg -i "{dl}" {ffmpegcode} "{Output_Path}" -y"""
 
-            process = await asyncio.create_subprocess_shell(
-                cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-            )
 
-            stdout, stderr = await process.communicate()
-            er = stderr.decode()
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
 
-            try:
-                if er:
-                    await ms.edit(str(er) + "\n\n**Error**")
-                    shutil.rmtree(f"ffmpeg/{UID}")
-                    shutil.rmtree(f"encode/{UID}")
-                    return
-            except BaseException:
-                pass
+        last_update_time = 0
+        while True:
+            line = await process.stdout.readline()
+            if not line:
+                break
+            line = line.decode().strip()
+            if "=" in line:
+                key, value = line.split("=", 1)
+                if key == "out_time_us":
+                    current_time = int(value) / 1_000_000  # Convert microseconds to seconds
+                    percentage = (current_time / duration) * 100 if duration else 0
 
-            # Uploading
-            if (file.thumbs or c_thumb):
-                if c_thumb:
-                    ph_path = await bot.download_media(c_thumb)
-                else:
-                    ph_path = await bot.download_media(file.thumbs[0].file_id)
+                    # Read the current file size
+                    current_size = os.path.getsize(Output_Path) / (1024 * 1024) if os.path.exists(Output_Path) else 0
+                    estimated_size = current_size / (percentage / 100) if percentage > 0 else original_size
 
-            await ms.edit(f"⚠️__**Please wait...**__\n**Uploading {res} file...**")
-            org = int(Path(File_Path).stat().st_size)
-            com = int(Path(output_path).stat().st_size)
-            pe = 100 - ((com / org) * 100)
-            per = f"{pe:.2f}%"
-          
-            
+                    if time() - last_update_time > 5:  # Update every 5 seconds
+                        progress_bar = "▓" * floor(percentage / 10) + "░" * (10 - floor(percentage / 10))
+                        progress_message = (
+                            f"🎥 **Encoding Progress**:\n"
+                            f"**[{progress_bar}]** {percentage:.2f}%\n"
+                            f"**Elapsed Time**: {time() - start_time:.2f} seconds\n"
+                            f"**Current Size**: {current_size:.2f} MB\n"
+                            f"**Estimated Final Size**: {estimated_size:.2f} MB\n"
+                            f"**Status**: Encoding..."
+                        )
+                        await ms.edit(progress_message)
+                        last_update_time = time()
 
-            await bot.send_document(
-                    UID,
-                    document=output_path,
-                    thumb=ph_path,
-                    caption="output file",
-                    progress=progress_for_pyrogram,
-                    progress_args=("⚠️__**Please wait...**__\n🌨️ **Uᴩʟᴏᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time()))
-        
+        await process.wait()
 
-        # Final Cleanup
-        await ms.edit("All files uploaded successfully. Cleaning up...")
-        shutil.rmtree(f"ffmpeg/{UID}")
-        shutil.rmtree(f"encode/{UID}")
+        if process.returncode != 0:
+            stderr = (await process.stderr.read()).decode()
+            return await ms.edit(f"❌ Compression failed:\n\n{stderr}")
+
+        final_size = os.path.getsize(Output_Path) / (1024 * 1024)
+        await ms.edit(f"✅ Compression complete! Final size: {final_size:.2f} MB. Uploading...")
+
+        thumb_path = None
+        if file.thumbs or c_thumb:
+            thumb_path = await bot.download_media(c_thumb or file.thumbs[0].file_id)
+
+        await bot.send_document(
+            UID,
+            document=Output_Path,
+            thumb=thumb_path,
+            caption=f"🎥 **Compressed Video**\n**Original Size**: {humanbytes(original_size)}\n"
+                    f"**Compressed Size**: {humanbytes(final_size)}\n"
+                    f"**Reduction**: {100 - (final_size / original_size) * 100:.2f}%",
+            progress=progress_for_pyrogram,
+            progress_args=("⚠️__**Please wait...**__\n🌨️ **Uploading...**", ms, start_time)
+        )
+
+        await ms.delete()
+
+        # Cleanup
+        shutil.rmtree(Download_DIR)
+        shutil.rmtree(Output_DIR)
+        if thumb_path:
+            os.remove(thumb_path)
 
     except Exception as e:
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
-        if os.path.isdir(f"ffmpeg/{UID}"):
-            shutil.rmtree(f"ffmpeg/{UID}")
-        if os.path.isdir(f"encode/{UID}"):
-            shutil.rmtree(f"encode/{UID}")            
-            
-            
-
+        print(f"Error: {e}")
+        await ms.edit(f"❌ An error occurred: {e}")
+        
 async def CompressVideo(bot, query, ffmpegcode, c_thumb):
     UID = query.from_user.id
     ms = await query.message.edit('Pʟᴇᴀsᴇ Wᴀɪᴛ...\n\n**Fᴇᴛᴄʜɪɴɢ Qᴜᴇᴜᴇ 👥**')
