@@ -14,7 +14,8 @@ from config import Config
 from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
-
+from math import floor
+from time import time
 
 QUEUE = []
 
@@ -216,8 +217,13 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         original_size = os.path.getsize(File_Path) / (1024 * 1024)
 
         # FFmpeg command with progress pipe
-        cmd = f"""ffmpeg -i "{dl}" {ffmpegcode} "{Output_Path}" -y"""
-
+        cmd = [
+            "ffmpeg",
+            "-i", dl,
+            *ffmpegcode.split(),
+            "-progress", "pipe:1",
+            "-y", Output_Path
+        ]
 
         process = await asyncio.create_subprocess_exec(
             *cmd,
