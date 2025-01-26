@@ -140,7 +140,7 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
         try:
             c_thumb = await db.get_thumbnail(query.from_user.id)
             ffmpeg = "-preset veryfast -c:v libx265 -s 854x480 -crf 30 -pix_fmt yuv420p -c:a libopus -b:a 32k -ac 2, -progress, pipe:1"
-            await quality_encode(bot=bot, query=query, c_thumb=c_thumb)
+            await quality_encode(bot=bot, query=query, ffmpegcode=ffmpeg, c_thumb=c_thumb)
         except Exception as e:
             print(e)
 
