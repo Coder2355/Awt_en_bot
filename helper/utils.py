@@ -15,7 +15,6 @@ from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from math import floor
-from time import time
 
 QUEUE = []
 
