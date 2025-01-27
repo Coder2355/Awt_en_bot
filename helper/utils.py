@@ -201,7 +201,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         
         
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        start_time = time()
+        
         try:
             if not os.path.isdir(Download_DIR) and not os.path.isdir(Output_DIR):
                 os.makedirs(Download_DIR)
@@ -216,6 +216,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         except Exception as e:
             return await ms.edit(str(e))
 
+        
         await ms.edit("🗜 **Compressing...**")
         duration = media.video.duration if hasattr(media, "video") and media.video else 0
         original_size = os.path.getsize(File_Path) / (1024 * 1024)
