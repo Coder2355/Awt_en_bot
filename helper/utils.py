@@ -15,7 +15,7 @@ from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from math import floor
-from somewhere import Filename
+
 
 QUEUE = []
 
@@ -193,7 +193,8 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
     try:
         media = query.message.reply_to_message
         file = getattr(media , media.media.value)
-        filename = Filename(filename=str(file.file_name), mime_type=str(file.mime_type))
+        filename = str(file.file_name)
+        mime_type=str(file.mime_type)
         Download_DIR = f"ffmpeg/{UID}"
         Output_DIR = f"encode/{UID}"
         File_Path = f"ffmpeg/{UID}/{filename}"
