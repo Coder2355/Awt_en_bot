@@ -202,6 +202,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
         
+        start_time = time.time()
         try:
             if not os.path.isdir(Download_DIR) and not os.path.isdir(Output_DIR):
                 os.makedirs(Download_DIR)
@@ -211,7 +212,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
                     message=file,
                     file_name=File_Path,
                     progress=progress_for_pyrogram,
-                    progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time.time())
+                    progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, start_time)
                 )
         except Exception as e:
             return await ms.edit(str(e))
