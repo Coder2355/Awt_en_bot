@@ -196,7 +196,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         filename = Filename(filename=str(file.file_name), mime_type=str(file.mime_type))
         Download_DIR = f"ffmpeg/{UID}"
         Output_DIR = f"encode/{UID}"
-        File_Path = f"{Download_DIR}/{filename}"
+        File_Path = f"ffmpeg/{UID}/{filename}"
         Output_Path = f"encode/{UID}/{filename}"
         
         
@@ -225,7 +225,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         # FFmpeg command with progress pipe
         cmd = [
             "ffmpeg",
-            "-i", File_Path,
+            "-i", dl,
             *ffmpegcode.split(),
             "-progress", "pipe:1",
             "-y", Output_Path
