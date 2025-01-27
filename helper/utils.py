@@ -193,11 +193,10 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
     try:
         media = query.message.reply_to_message
         file = getattr(media , media.media.value)
-        filename = str(file.file_name)
-        mime_type=str(file.mime_type)
+        filename = Filename(filename=str(file.file_name), mime_type=str(file.mime_type))
         Download_DIR = f"ffmpeg/{UID}"
         Output_DIR = f"encode/{UID}"
-        File_Path = f"ffmpeg/{UID}/{filename}"
+        File_Path = f"{Download_DIR}/{filename}"
         Output_Path = f"encode/{UID}/{filename}"
         
         
