@@ -184,44 +184,37 @@ async def skip(e, userid):
     return
 
 
-
 async def quality_encode(bot, query, ffmpegcode, c_thumb):
     UID = query.from_user.id
     ms = await query.message.edit('Pʟᴇᴀsᴇ Wᴀɪᴛ...\n\n**Fᴇᴛᴄʜɪɴɢ Qᴜᴇᴜᴇ 👥**')
-    
 
-    if os.path.isdir(f'ffmpeg/{UID}') and os.path.isdir(f'encode/{UID}'):
-        return await ms.edit("**⚠️ Yᴏᴜ ᴄᴀɴ ᴄᴏᴍᴘʀᴇss ᴏɴʟʏ ᴏɴᴇ ғɪʟᴇ ᴀᴛ ᴀ ᴛɪᴍᴇ\n\nAs ᴛʜɪs ʜᴇʟᴘs ʀᴇᴅᴜᴄᴇ sᴇʀᴠᴇʀ ʟᴏᴀᴅ.**")
+    if os.path.isdir(f'ffmpeg/{UID}') or os.path.isdir(f'encode/{UID}'):
+        return await ms.edit("⚠️ **You can compress only one file at a time to reduce server load.**")
 
     try:
         media = query.message.reply_to_message
-        file = getattr(media , media.media.value)
-        filename = Filename(filename=str(file.file_name), mime_type=str(file.mime_type))
+        file = getattr(media, media.media.value)
+        filename = file.file_name
         Download_DIR = f"ffmpeg/{UID}"
         Output_DIR = f"encode/{UID}"
-        File_Path = f"ffmpeg/{UID}/{filename}"
-        Output_Path = f"encode/{UID}/{filename}"
-        
-        
-        await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        start_time = time()
-        try:
-            if not os.path.isdir(Download_DIR) and not os.path.isdir(Output_DIR):
-                os.makedirs(Download_DIR)
-                os.makedirs(Output_DIR)
+        File_Path = f"{Download_DIR}/{filename}"
+        Output_Path = f"{Output_DIR}/{filename}"
 
-                dl = await bot.download_media(
-                    message=file,
-                    file_name=File_Path,
-                )
-        except Exception as e:
-            return await ms.edit(str(e))
-        
+        os.makedirs(Download_DIR, exist_ok=True)
+        os.makedirs(Output_DIR, exist_ok=True)
+
+        await ms.edit("⚠️ **Downloading File...**")
+        dl = await bot.download_media(
+            message=file,
+            file_name=File_Path,
+        )
+
+        if not os.path.exists(dl):
+            return await ms.edit("❌ **Download failed. File not found.**")
+
         await ms.edit("🗜 **Compressing...**")
         duration = media.video.duration if hasattr(media, "video") and media.video else 0
-        original_size = os.path.getsize(File_Path) / (1024 * 1024)
 
-        # FFmpeg command with progress pipe
         cmd = [
             "ffmpeg",
             "-i", dl,
@@ -246,49 +239,43 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             if "=" in line:
                 key, value = line.split("=", 1)
                 if key == "out_time_us":
-                    current_time = int(value) / 1_000_000  # Convert microseconds to seconds
+                    current_time = int(value) / 1_000_000
                     percentage = (current_time / duration) * 100 if duration else 0
 
-                    # Read the current file size
-                    current_size = os.path.getsize(Output_Path) / (1024 * 1024) if os.path.exists(Output_Path) else 0
-                    estimated_size = current_size / (percentage / 100) if percentage > 0 else original_size
-
-                    if time() - last_update_time > 5:  # Update every 5 seconds
+                    if time() - last_update_time > 5:
                         progress_bar = "▓" * floor(percentage / 10) + "░" * (10 - floor(percentage / 10))
-                        progress_message = (
+                        await ms.edit(
                             f"🎥 **Encoding Progress**:\n"
                             f"**[{progress_bar}]** {percentage:.2f}%\n"
-                            f"**Elapsed Time**: {time() - start_time:.2f} seconds\n"
-                            f"**Current Size**: {current_size:.2f} MB\n"
-                            f"**Estimated Final Size**: {estimated_size:.2f} MB\n"
+                            f"**Elapsed Time**: {time() - last_update_time:.2f} seconds\n"
                             f"**Status**: Encoding..."
                         )
-                        await ms.edit(progress_message)
                         last_update_time = time()
 
         await process.wait()
 
-        if process.returncode != 0:
+        if process.returncode != 0 or not os.path.exists(Output_Path) or os.path.getsize(Output_Path) == 0:
             stderr = (await process.stderr.read()).decode()
             return await ms.edit(f"❌ Compression failed:\n\n{stderr}")
 
         final_size = os.path.getsize(Output_Path) / (1024 * 1024)
         await ms.edit(f"✅ Compression complete! Final size: {final_size:.2f} MB. Uploading...")
 
-        if (file.thumbs or c_thumb):
-            if c_thumb:
-                ph_path = await bot.download_media(c_thumb)
-            else:
-                ph_path = await bot.download_media(file.thumbs[0].file_id)
+        thumb_path = None
+        if c_thumb:
+            thumb_path = await bot.download_media(c_thumb)
+        elif file.thumbs:
+            thumb_path = await bot.download_media(file.thumbs[0].file_id)
 
         await bot.send_document(
-                UID,
-                document=Output_Path,
-                thumb=ph_path,
-                caption="output file here")
+            UID,
+            document=Output_Path,
+            thumb=thumb_path,
+            caption="🎉 **Here is your compressed file!**"
+        )
     except Exception as e:
-        print(f"Error: {e}")
         await ms.edit(f"❌ An error occurred: {e}")
+
         
 async def CompressVideo(bot, query, ffmpegcode, c_thumb):
     UID = query.from_user.id
