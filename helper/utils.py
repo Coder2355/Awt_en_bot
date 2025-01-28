@@ -271,9 +271,10 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         await bot.send_document(
             UID,
             document=Output_Path,
-            thumb=thumb_path,
-            caption="🎉 **Here is your compressed file!**"
-        )
+            thumb=ph_path if os.path.exists(ph_path) else None,
+            caption="Here is your output file",
+            parse_mode="Markdown",
+                )
     except Exception as e:
         await ms.edit(f"❌ An error occurred: {e}")
 
