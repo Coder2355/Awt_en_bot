@@ -182,42 +182,38 @@ async def skip(e, userid):
     
     return
 
+
+
 async def quality_encode(bot, query, ffmpegcode, c_thumb):
     UID = query.from_user.id
     ms = await query.message.edit('Pʟᴇᴀsᴇ Wᴀɪᴛ...\n\n**Fᴇᴛᴄʜɪɴɢ Qᴜᴇᴜᴇ 👥**')
-    
 
     if os.path.isdir(f'ffmpeg/{UID}') and os.path.isdir(f'encode/{UID}'):
         return await ms.edit("**⚠️ Yᴏᴜ ᴄᴀɴ ᴄᴏᴍᴘʀᴇss ᴏɴʟʏ ᴏɴᴇ ғɪʟᴇ ᴀᴛ ᴀ ᴛɪᴍᴇ\n\nAs ᴛʜɪs ʜᴇʟᴘs ʀᴇᴅᴜᴄᴇ sᴇʀᴠᴇʀ ʟᴏᴀᴅ.**")
 
     try:
         media = query.message.reply_to_message
-        file = getattr(media , media.media.value)
-        filename = Filename(filename=str(file.file_name), mime_type=str(file.mime_type))
+        file = getattr(media, media.media.value)
+        filename = file.file_name
         Download_DIR = f"ffmpeg/{UID}"
         Output_DIR = f"encode/{UID}"
-        File_Path = f"ffmpeg/{UID}/{filename}"
-        Output_Path = f"encode/{UID}/{filename}"
-        
-        
+        File_Path = f"{Download_DIR}/{filename}"
+        Output_Path = f"{Output_DIR}/{filename}"
+
+        if not os.path.isdir(Download_DIR):
+            os.makedirs(Download_DIR)
+        if not os.path.isdir(Output_DIR):
+            os.makedirs(Output_DIR)
+
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        
         start_time = time.time()
-        try:
-            if not os.path.isdir(Download_DIR) and not os.path.isdir(Output_DIR):
-                os.makedirs(Download_DIR)
-                os.makedirs(Output_DIR)
+        dl = await bot.download_media(
+            message=file,
+            file_name=File_Path,
+            progress=progress_for_pyrogram,
+            progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, start_time)
+        )
 
-                dl = await bot.download_media(
-                    message=file,
-                    file_name=File_Path,
-                    progress=progress_for_pyrogram,
-                    progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, start_time)
-                )
-        except Exception as e:
-            return await ms.edit(str(e))
-
-        
         await ms.edit("🗜 **Compressing...**")
         duration = media.video.duration if hasattr(media, "video") and media.video else 0
         original_size = os.path.getsize(File_Path) / (1024 * 1024)
@@ -225,7 +221,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         # FFmpeg command with progress pipe
         cmd = [
             "ffmpeg",
-            "-i", dl,
+            "-i", File_Path,
             *ffmpegcode.split(),
             "-progress", "pipe:1",
             "-y", Output_Path
