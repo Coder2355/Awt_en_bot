@@ -207,7 +207,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             os.makedirs(Output_DIR)
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        start_time = time()
+        start_time = time.time()
       
         dl = await bot.download_media(
             message=file,
