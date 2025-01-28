@@ -215,15 +215,9 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         await ms.edit("🗜 **Compressing...**")
         duration = media.video.duration if hasattr(media, "video") and media.video else 0
 
-        cmd = [
-            "ffmpeg",
-            "-i", dl,
-            *ffmpegcode.split(),
-            "-progress", "pipe:1",
-            "-y",
-            Output_Path
-        ]
+        
 
+        cmd = f"""ffmpeg -i "{dl}" {ffmpegcode} "-progress" "pipe:1" "{Output_Path}" -y"""
         process = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
