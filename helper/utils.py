@@ -262,7 +262,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         final_size = os.path.getsize(Output_Path) / (1024 * 1024)
         await ms.edit(f"✅ Compression complete! Final size: {final_size:.2f} MB. Uploading...")
 
-        thumb_path = None
+        
         if c_thumb:
             thumb_path = await bot.download_media(c_thumb)
         elif file.thumbs:
@@ -271,7 +271,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         await bot.send_document(
             UID,
             document=Output_Path,
-            thumb=ph_path if os.path.exists(ph_path) else None,
+            thumb=thumb_path,
             caption="Here is your output file",
             parse_mode="Markdown",
                 )
