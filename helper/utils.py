@@ -15,6 +15,7 @@ from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from math import floor
+from time import time
 
 
 QUEUE = []
@@ -206,7 +207,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             os.makedirs(Output_DIR)
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        start_time = time.time()
+        start_time = time()
         dl = await bot.download_media(
             message=file,
             file_name=File_Path,
