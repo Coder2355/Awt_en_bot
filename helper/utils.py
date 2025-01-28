@@ -280,8 +280,6 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             caption=f"🎥 **Compressed Video**\n**Original Size**: {humanbytes(original_size)}\n"
                     f"**Compressed Size**: {humanbytes(final_size)}\n"
                     f"**Reduction**: {100 - (final_size / original_size) * 100:.2f}%",
-            progress=progress_for_pyrogram,
-            progress_args=("⚠️__**Please wait...**__\n🌨️ **Uploading...**", ms, start_time)
         )
 
         await ms.delete()
