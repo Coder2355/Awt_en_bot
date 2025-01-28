@@ -226,11 +226,22 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             Output_Path
         ]
 
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+        process = await asyncio.create_subprocess_shell(
+            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
+        
+
+        stdout, stderr = await process.communicate()
+        er = stderr.decode()
+
+        try:
+            if er:
+                await ms.edit(str(er) + "\n\n**Error**")
+                shutil.rmtree(f"ffmpeg/{UID}")
+                shutil.rmtree(f"encode/{UID}")
+                return
+        except BaseException:
+            pass
 
         last_update_time = 0
         while True:
@@ -261,12 +272,8 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
                         await ms.edit(progress_message)
                         last_update_time = time()
 
-        await process.wait()
-
-        if process.returncode != 0 or not os.path.exists(Output_Path) or os.path.getsize(Output_Path) == 0:
-            stderr = (await process.stderr.read()).decode()
-            return await ms.edit(f"❌ Compression failed:\n\n{stderr}")
-            
+        
+        
         final_size = os.path.getsize(Output_Path) / (1024 * 1024)
         await ms.edit(f"✅ Compression complete! Final size: {final_size:.2f} MB. Uploading...")
 
