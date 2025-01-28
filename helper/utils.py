@@ -208,12 +208,12 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
         start_time = time()
-        start = time.time()
+      
         dl = await bot.download_media(
             message=file,
             file_name=File_Path,
             progress=progress_for_pyrogram,
-            progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, start)
+            progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, start_time)
         )
 
         await ms.edit("🗜 **Compressing...**")
