@@ -222,8 +222,8 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             "-i", dl,
             *ffmpegcode.split(),
             "-progress", "pipe:1",
-            Output_Path,
-            "-y"
+            "-y",
+            Output_Path
         ]
         process = await asyncio.create_subprocess_exec(
             *cmd,
