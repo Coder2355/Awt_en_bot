@@ -244,7 +244,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
                     estimated_size = current_size / (percentage / 100) if percentage > 0 else original_size
 
                     if time() - last_update_time > 5:  # Update every 5 seconds
-                        progress_bar = "▓" * floor(percentage / 10) + "░" * (10 - floor(percentage / 10))
+                        progress_bar = "▓" * floor(percentage / 5) + "░" * (20 - floor(percentage / 5))
                         progress_message = (
                             f"🎥 **Encoding Progress**:\n"
                             f"**[{progress_bar}]** {percentage:.2f}%\n"
