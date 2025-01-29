@@ -15,7 +15,6 @@ from script import Txt
 from pyrogram import enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from math import floor
-from time import time
 
 
 QUEUE = []
@@ -207,7 +206,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             os.makedirs(Output_DIR)
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        start_time = time()
+        start_time = time.time()
       
         dl = await bot.download_media(
             message=file,
@@ -228,6 +227,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         
 
         last_update_time = 0
+        dt=time.time()
         while True:
             line = await process.stdout.readline()
             if not line:
@@ -243,18 +243,18 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
                     current_size = os.path.getsize(Output_Path) / (1024 * 1024) if os.path.exists(Output_Path) else 0
                     estimated_size = current_size / (percentage / 100) if percentage > 0 else original_size
 
-                    if time() - last_update_time > 5:  # Update every 5 seconds
+                    if dt - last_update_time > 5:  # Update every 5 seconds
                         progress_bar = "▓" * floor(percentage / 5) + "░" * (20 - floor(percentage / 5))
                         progress_message = (
                             f"🎥 **Encoding Progress**:\n"
                             f"**[{progress_bar}]** {percentage:.2f}%\n"
-                            f"**Elapsed Time**: {time() - start_time:.2f} seconds\n"
+                            f"**Elapsed Time**: {dt - start_time:.2f} seconds\n"
                             f"**Current Size**: {current_size:.2f} MB\n"
                             f"**Estimated Final Size**: {estimated_size:.2f} MB\n"
                             f"**Status**: Encoding..."
                         )
                         await ms.edit(progress_message)
-                        last_update_time = time()
+                        last_update_time = dt
 
         
         
