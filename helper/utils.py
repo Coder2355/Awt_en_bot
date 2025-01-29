@@ -22,7 +22,7 @@ QUEUE = []
 
 
 async def progress_for_pyrogram(current, total, ud_type, message, start):
-    now = time.time()
+    now = time()
     diff = now - start
     if round(diff % 5.00) == 0 or current == total:        
         percentage = current * 100 / total
@@ -206,11 +206,14 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             os.makedirs(Output_DIR)
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
-        start_time = time.time()
+        start_time = time()
       
         dl = await bot.download_media(
-            message=file,
-            file_name=File_Path)
+                    message=file,
+                    file_name=File_Path,
+                    progress=progress_for_pyrogram,
+                    progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time())
+                    )
         await ms.edit("🗜 **Compressing...**")
         duration = media.video.duration if hasattr(media, "video") and media.video else 0
         original_size = os.path.getsize(File_Path) / (1024 * 1024)
@@ -227,7 +230,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         
 
         last_update_time = 0
-        dt=time.time()
+        
         while True:
             line = await process.stdout.readline()
             if not line:
@@ -243,18 +246,18 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
                     current_size = os.path.getsize(Output_Path) / (1024 * 1024) if os.path.exists(Output_Path) else 0
                     estimated_size = current_size / (percentage / 100) if percentage > 0 else original_size
 
-                    if dt - last_update_time > 5:  # Update every 5 seconds
+                    if time() - last_update_time > 5:  # Update every 5 seconds
                         progress_bar = "▓" * floor(percentage / 5) + "░" * (20 - floor(percentage / 5))
                         progress_message = (
                             f"🎥 **Encoding Progress**:\n"
                             f"**[{progress_bar}]** {percentage:.2f}%\n"
-                            f"**Elapsed Time**: {dt - start_time:.2f} seconds\n"
+                            f"**Elapsed Time**: {time() - start_time:.2f} seconds\n"
                             f"**Current Size**: {current_size:.2f} MB\n"
                             f"**Estimated Final Size**: {estimated_size:.2f} MB\n"
                             f"**Status**: Encoding..."
                         )
                         await ms.edit(progress_message)
-                        last_update_time = dt
+                        last_update_time = time()
 
         
         
