@@ -304,6 +304,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
         shutil.rmtree(Output_DIR)
         if thumb_path:
             os.remove(thumb_path)
+        await message.reply(text="i am anime warrior Tamil", parse_mode="Markdown")
 
     except Exception as e:
         print(f"Error: {e}")
