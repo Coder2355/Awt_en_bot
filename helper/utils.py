@@ -225,17 +225,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
 
-        stdout, stderr = await process.communicate()
-        er = stderr.decode()
-
-        try:
-            if er:
-                await ms.edit(f"{er}\n\n**Error**")
-                shutil.rmtree(f"ffmpeg/{UID}")
-                shutil.rmtree(f"encode/{UID}")
-                return
-        except BaseException:
-            pass
+        
 
         last_update_time = 0
         while True:
@@ -268,6 +258,17 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
 
         
         
+        stdout, stderr = await process.communicate()
+        er = stderr.decode()
+
+        try:
+            if er:
+                await ms.edit(f"{er}\n\n**Error**")
+                shutil.rmtree(f"ffmpeg/{UID}")
+                shutil.rmtree(f"encode/{UID}")
+                return
+        except BaseException:
+            pass
         final_size = os.path.getsize(Output_Path) / (1024 * 1024)
         await ms.edit(f"✅ Compression complete! Final size: {final_size:.2f} MB. Uploading...")
 
@@ -282,6 +283,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             caption=f"🎥 **Compressed Video**\n**Original Size**: {humanbytes(original_size)}\n"
                     f"**Compressed Size**: {humanbytes(final_size)}\n"
                     f"**Reduction**: {100 - (final_size / original_size) * 100:.2f}%",
+                    force_document=True
         )
 
         await ms.delete()
