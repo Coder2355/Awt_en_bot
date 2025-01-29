@@ -237,6 +237,11 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
             if not line:
                 break
             line = line.decode().strip()
+            encoding_speed = None
+            if "fps=" in line:
+                parts = line.split("fps=")
+                if len(parts) > 1:
+                    encoding_speed = parts[1].split(" ")[0].strip()
             if "=" in line:
                 key, value = line.split("=", 1)
                 if key == "out_time_us":
@@ -249,11 +254,7 @@ async def quality_encode(bot, query, ffmpegcode, c_thumb):
 
                     if time() - last_update_time > 5:  # Update every 5 seconds
                         progress_bar = "▓" * floor(percentage / 5) + "░" * (20 - floor(percentage / 5))
-                        encoding_speed = None
-                        if "fps=" in line:
-                            parts = line.split("fps=")
-                            if len(parts) > 1:
-                                encoding_speed = parts[1].split(" ")[0].strip()
+                       
                         progress_message = (
                             f"🎥 **Encoding Progress**:\n"
                             f"**[{progress_bar}]** {percentage:.2f}%\n"
