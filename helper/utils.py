@@ -199,7 +199,6 @@ async def quality_encode(bot, query, c_thumb):
         Download_DIR = f"ffmpeg/{UID}"
         output_DIR = f"encode/{UID}"
         File_Path = f"{Download_DIR}/{filename}"
-        output_Path = f"{output_DIR}/{filename}"
 
         if not os.path.isdir(Download_DIR):
             os.makedirs(Download_DIR)
