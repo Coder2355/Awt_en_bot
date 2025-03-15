@@ -248,7 +248,7 @@ async def quality_encode(bot, query, c_thumb):
                         percentage = (current_time / duration) * 100 if duration else 0
 
                     # Read the current file size
-                        current_size = os.path.getsize(Output_Path) / (1024 * 1024) if os.path.exists(Output_Path) else 0
+                        current_size = os.path.getsize(output_path) / (1024 * 1024) if os.path.exists(output_path) else 0
                         estimated_size = current_size / (percentage / 100) if percentage > 0 else original_size
 
                         if time() - last_update_time > 5:  # Update every 5 seconds
@@ -275,7 +275,7 @@ async def quality_encode(bot, query, c_thumb):
                     return
             except BaseException:
                 pass
-            final_size = os.path.getsize(Output_Path) / (1024 * 1024)
+            final_size = os.path.getsize(output_path) / (1024 * 1024)
             await ms.edit(f"✅ Compression complete! Final size: {final_size:.2f} MB. Uploading...")
 
             thumb_path = None
@@ -284,7 +284,7 @@ async def quality_encode(bot, query, c_thumb):
 
             await bot.send_document(
                 UID,
-                document=Output_Path,
+                document=output_path,
                 thumb=thumb_path,
                 caption=f"🎥 **Compressed Video**\n**Original Size**: {humanbytes(original_size)}\n"
                     f"**Compressed Size**: {humanbytes(final_size)}\n"
