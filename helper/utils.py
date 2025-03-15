@@ -210,7 +210,7 @@ async def quality_encode(bot, query, c_thumb):
         start_time = time()
       
         dl = await bot.download_media(
-                    message=file,
+          File_Path message=file,
                     file_name=File_Path,
                     progress=progress_for_pyrogram,
                     progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time())
@@ -228,7 +228,7 @@ async def quality_encode(bot, query, c_thumb):
             original_size = os.path.getsize(File_Path) / (1024 * 1024)
 
         # FFmpeg command with progress pipe
-            cmd = f"""ffmpeg -i "{dl}" {ffmpegcode} -progress pipe:1 "{Output_Path}" -y"""
+            cmd = f"""ffmpeg -i "{File_Path}" {ffmpegcode} -progress pipe:1 "{Output_Path}" -y"""
                             
             process = await asyncio.create_subprocess_shell(
                 cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
