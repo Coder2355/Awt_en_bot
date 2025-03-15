@@ -210,7 +210,7 @@ async def quality_encode(bot, query, c_thumb):
         start_time = time()
       
         dl = await bot.download_media(
-          File_Path message=file,
+                    message=file,
                     file_name=File_Path,
                     progress=progress_for_pyrogram,
                     progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time())
