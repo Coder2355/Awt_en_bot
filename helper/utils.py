@@ -200,7 +200,14 @@ async def quality_encode(bot, query, c_thumb):
         Output_DIR = f"encode/{UID}"
         File_Path = f"{Download_DIR}/{filename}"
         Output_Path = f"{Output_DIR}/{filename}"
-        
+        if media.video:
+            duration = media.video.duration if hasattr(media, "video") and media.video else 0
+        elif media.document:
+            duration = media.document.duration if hasattr(media, "document") and media.document else 0
+        elif media.audio:
+            duration = media.audio.duration if hasattr(media, "audio") and media.audio else 0
+        else:
+            await query.message.reply_text("Send a Correct file Format")
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
         start_time = time()
@@ -224,7 +231,6 @@ async def quality_encode(bot, query, c_thumb):
 
         for res, ffmpegcode in resolutions.items():
             await ms.edit(text=f"Start Compressing Task {res}")
-            duration = media.video.duration if hasattr(media, "video") and media.video else 0
             original_size = os.path.getsize(File_Path) / (1024 * 1024)
 
         # FFmpeg command with progress pipe
