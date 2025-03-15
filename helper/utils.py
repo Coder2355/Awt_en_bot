@@ -222,6 +222,7 @@ async def quality_encode(bot, query, c_thumb):
         }
 
         for res, ffmpegcode in resolutions.items():
+            Output_path = f"{Output_Path}/{res}_{filename}"
             await ms.edit(text=f"Start Compressing Task {res}")
             duration = media.video.duration if hasattr(media, "video") and media.video else 0
             original_size = os.path.getsize(File_Path) / (1024 * 1024)
