@@ -197,23 +197,24 @@ async def quality_encode(bot, query, c_thumb):
         file = getattr(media, media.media.value)
         filename = file.file_name
         Download_DIR = f"ffmpeg/{UID}"
-        output_DIR = f"encode/{UID}"
-        File_Path = f"{Download_DIR}/{filename}"
-
-        if not os.path.isdir(Download_DIR):
-            os.makedirs(Download_DIR)
-        if not os.path.isdir(output_DIR):
-            os.makedirs(output_DIR)
+        Output_DIR = f"encode/{UID}"
+        File_Path = f"ffmpeg/{UID}/{filename}"
+        Output_Path = f"encode/{UID}/{filename}"
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
         start_time = time()
-      
-        dl = await bot.download_media(
-                    message=file,
-                    file_name=File_Path,
-                    progress=progress_for_pyrogram,
-                    progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time())
-                    )
+        try:
+            if not os.path.isdir(Download_DIR) and not os.path.isdir(Output_DIR):
+                os.makedirs(Download_DIR)
+                os.makedirs(Output_DIR)
+                dl = await bot.download_media(
+                        message=file,
+                        file_name=File_Path,
+                        progress=progress_for_pyrogram,
+                        progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time())
+                        )
+        except Exception as e:
+            return await ms.edit(str(e))
         resolutions = {
             "480p": "-vf scale=144:144 -crf 30",
             "720p": "-vf scale=240:240 -crf 30",
@@ -221,7 +222,6 @@ async def quality_encode(bot, query, c_thumb):
         }
 
         for res, ffmpegcode in resolutions.items():
-            Output_path = f"{output_DIR}/{res}_{filename}"
             await ms.edit(text=f"Start Compressing Task {res}")
             duration = media.video.duration if hasattr(media, "video") and media.video else 0
             original_size = os.path.getsize(File_Path) / (1024 * 1024)
