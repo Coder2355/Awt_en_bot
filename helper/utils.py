@@ -197,14 +197,14 @@ async def quality_encode(bot, query, c_thumb):
         file = getattr(media, media.media.value)
         filename = file.file_name
         Download_DIR = f"ffmpeg/{UID}"
-        Output_DIR = f"encode/{UID}"
+        output_DIR = f"encode/{UID}"
         File_Path = f"{Download_DIR}/{filename}"
         Output_Path = f"{Output_DIR}/{filename}"
 
         if not os.path.isdir(Download_DIR):
             os.makedirs(Download_DIR)
-        if not os.path.isdir(Output_DIR):
-            os.makedirs(Output_DIR)
+        if not os.path.isdir(output_DIR):
+            os.makedirs(output_DIR)
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
         start_time = time()
@@ -222,15 +222,14 @@ async def quality_encode(bot, query, c_thumb):
         }
 
         for res, ffmpegcode in resolutions.items():
+            Output_path = f"{output_DIR}/{res}_{filename}"
             await ms.edit(text=f"Start Compressing Task {res}")
             duration = media.video.duration if hasattr(media, "video") and media.video else 0
             original_size = os.path.getsize(File_Path) / (1024 * 1024)
 
         # FFmpeg command with progress pipe
-            cmd = (
-                f"ffmpeg -i {dl} {ffmpegcode} -progress pipe:1 -y {Output_Path}"
-            )
-
+            cmd = f"""ffmpeg -i "{dl}" {ffmpegcode} -progress pipe:1 "{Output_Path}" -y"""
+                            
             process = await asyncio.create_subprocess_shell(
                 cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
