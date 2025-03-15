@@ -228,7 +228,7 @@ async def quality_encode(bot, query, c_thumb):
             original_size = os.path.getsize(File_Path) / (1024 * 1024)
 
         # FFmpeg command with progress pipe
-            cmd = f"""ffmpeg -i "{File_Path}" {ffmpegcode} -progress pipe:1 "{output_path}" -y"""
+            cmd = f"""ffmpeg -i "{File_Path}" {ffmpegcode} -progress pipe:1 "{Output_Path}" -y"""
                             
             process = await asyncio.create_subprocess_shell(
                 cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
