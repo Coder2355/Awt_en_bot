@@ -185,7 +185,7 @@ async def skip(e, userid):
 
 
 
-async def quality_encode(bot, query, ffmpegcode, c_thumb):
+async def quality_encode(bot, query, c_thumb):
     UID = query.from_user.id
     ms = await query.message.edit('Pʟᴇᴀsᴇ Wᴀɪᴛ...\n\n**Fᴇᴛᴄʜɪɴɢ Qᴜᴇᴜᴇ 👥**')
 
