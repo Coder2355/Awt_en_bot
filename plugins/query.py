@@ -26,8 +26,8 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
         btn = [
             [InlineKeyboardButton(text='❗ Hᴇʟᴘ', callback_data='help'), InlineKeyboardButton(
                 text='🌨️ Aʙᴏᴜᴛ', callback_data='about')],
-            [InlineKeyboardButton(text='📢 Uᴘᴅᴀᴛᴇs', url='https://t.me/AIORFT'), InlineKeyboardButton
-                (text='💻 Dᴇᴠᴇʟᴏᴘᴇʀ', url='https://t.me/Snowball_Official')]
+            [InlineKeyboardButton(text='📢 Uᴘᴅᴀᴛᴇs', url='https://t.me/Awt_botz'), InlineKeyboardButton
+                (text='💻 Dᴇᴠᴇʟᴏᴘᴇʀ', url='https://t.me/Devil007')]
         ]
         await query.message.edit(text=Txt.PRIVATE_START_MSG.format(query.from_user.mention), reply_markup=InlineKeyboardMarkup(btn))
 
@@ -62,9 +62,9 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
         file = getattr(query.message.reply_to_message,
                        query.message.reply_to_message.media.value)
 
-        text = f"""**__What do you want me to do with this file.?__**\n\n**File Name** :- `{file.file_name}`\n\n**File Size** :- `{humanize.naturalsize(file.file_size)}`"""
-        buttons = [[InlineKeyboardButton("Rᴇɴᴀᴍᴇ 📝", callback_data=f"rename-{query.from_user.id}")],
-                   [InlineKeyboardButton("Cᴏᴍᴘʀᴇss 🗜️", callback_data=f"compress-{query.from_user.id}")]]
+        text = f"""**Select the Compress to start The Process 🗜️_**\n\n**File Name** :- `{file.file_name}`\n\n**File Size** :- `{humanize.naturalsize(file.file_size)}`"""
+        buttons = ([InlineKeyboardButton("Cᴏᴍᴘʀᴇss 🗜️", callback_data=f"compress-{query.from_user.id}")]
+                   [InlineKeyboardButton("Cancel ✖️", callback_data=f"close")])
 
         await query.message.edit(text=text, reply_markup=InlineKeyboardMarkup(buttons))
 
@@ -91,7 +91,7 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
                 [InlineKeyboardButton(text='480ᴘ', callback_data='480pc'), InlineKeyboardButton(
                     text='720ᴘ', callback_data='720pc')],
                 [InlineKeyboardButton(text='1080ᴘ', callback_data='1080pc'), InlineKeyboardButton(
-                    text='4ᴋ', callback_data='3kc')],
+                    text='3 Quality', callback_data='2160pc')],
                 [InlineKeyboardButton(
                     text='Cᴜsᴛᴏᴍ Eɴᴄᴏᴅɪɴɢ 🗜️', callback_data='custompc')],
                 [InlineKeyboardButton(text='✘ Cʟᴏꜱᴇ', callback_data='close'), InlineKeyboardButton(
@@ -102,7 +102,7 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
     elif data == '480pc':
         try:
             c_thumb = await db.get_thumbnail(query.from_user.id)
-            ffmpeg = "-preset veryfast -c:v libx264 -s 840x480 -x264-params 'bframes=8:psy-rd=1:ref=3:aq-mode=3:aq-strength=0.8:deblock=1,1' -pix_fmt yuv420p -crf 30 -c:a libopus -b:a 32k -c:s copy -map 0 -ac 2 -ab 32k -vbr 2 -level 3.1 -threads 5"
+            ffmpeg = "-preset veryfast -c:v libx265 -s 854x480 -crf 30 -pix_fmt yuv420p -map 0:v -map 0:a -c:a libopus -b:a 32k -ac 2"
             await CompressVideo(bot=bot, query=query, ffmpegcode=ffmpeg, c_thumb=c_thumb)
 
         except Exception as e:
@@ -111,7 +111,7 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
     elif data == '720pc':
         try:
             c_thumb = await db.get_thumbnail(query.from_user.id)
-            ffmpeg = "-preset veryfast -c:v libx264 -s 1280x720 -x265-params 'bframes=8:psy-rd=1:ref=3:aq-mode=3:aq-strength=0.8:deblock=1,1' -pix_fmt yuv420p -crf 30 -c:a libopus -b:a 32k -c:s copy -map 0 -ac 2 -ab 32k -vbr 2 -level 3.1 -threads 5"
+            ffmpeg = "-preset veryfast -c:v libx265 -s 1280x720 -crf 30 -pix_fmt yuv420p -map 0:v -map 0:a -c:a libopus -b:a 32k -ac 2"
             await CompressVideo(bot=bot, query=query, ffmpegcode=ffmpeg, c_thumb=c_thumb)
 
         except Exception as e:
@@ -121,7 +121,7 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
 
         try:
             c_thumb = await db.get_thumbnail(query.from_user.id)
-            ffmpeg = "-preset veryfast -c:v libx264 -s 1920x1080 -x265-params 'bframes=8:psy-rd=1:ref=3:aq-mode=3:aq-strength=0.8:deblock=1,1' -pix_fmt yuv420p -crf 30 -c:a libopus -b:a 32k -c:s copy -map 0 -ac 2 -ab 32k -vbr 2 -level 3.1 -threads 5"
+            ffmpeg = "-preset veryfast -c:v libx265 -s 1920x1080 -crf 30 -pix_fmt yuv420p -map 0:v -map 0:a -c:a libopus -b:a 32k -ac 2"
             await CompressVideo(bot=bot, query=query, ffmpegcode=ffmpeg, c_thumb=c_thumb)
 
         except Exception as e:
@@ -131,12 +131,12 @@ async def Cb_Handle(bot: Client, query: CallbackQuery):
 
         try:
             c_thumb = await db.get_thumbnail(query.from_user.id)
-            ffmpeg = "-preset veryfast -c:v libx264 -s 3840x2160 -x265-params 'bframes=8:psy-rd=1:ref=3:aq-mode=3:aq-strength=0.8:deblock=1,1' -pix_fmt yuv420p -crf 30 -c:a libopus -b:a 32k -c:s copy -map 0 -ac 2 -ab 32k -vbr 2 -level 3.1 -threads 5"
-            await CompressVideo(bot=bot, query=query, ffmpegcode=ffmpeg, c_thumb=c_thumb)
+            
+            await quality_encode(bot=bot, query=query, c_thumb=c_thumb)
 
         except Exception as e:
             print(e)
-    elif data == '3kc':
+    elif data == '4k':
         try:
             c_thumb = await db.get_thumbnail(query.from_user.id)
             ffmpeg = "-preset veryfast -c:v libx265 -s 240x144 -crf 30 -pix_fmt yuv420p -c:a libopus -b:a 32k -ac 2"
