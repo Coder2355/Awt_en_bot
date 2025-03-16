@@ -224,13 +224,13 @@ async def quality_encode(bot, query, c_thumb):
         except Exception as e:
             return await ms.edit(str(e))
         resolutions = {
-            "480p": "-vf scale=144:144 -crf 30",
-            "720p": "-vf scale=240:240 -crf 30",
-            "1080p": "-vf scale=360:360 -crf 30"
+            "480p": "-preset veryfast -c:v libx264 -s 144x144 -crf 30 -pix_fmt yuv420p -map 0:v -map 0:a -c:a libopus -b:a 32k -ac 2",
+            "720p": "-preset veryfast -c:v libx264 -s 240x240 -crf 30 -pix_fmt yuv420p -map 0:v -map 0:a -c:a libopus -b:a 32k -ac 2",
+            "1080p": "-preset veryfast -c:v libx264 -s 360x360 -crf 30 -pix_fmt yuv420p -map 0:v -map 0:a -c:a libopus -b:a 32k -ac 2"
         }
 
         for res, ffmpegcode in resolutions.items():
-            await ms.edit(text=f"Start Compressing Task {res}")
+            ms = await query.message.reply_text(text=f"Start Compressing Task {res}")
             original_size = os.path.getsize(File_Path) / (1024 * 1024)
 
         # FFmpeg command with progress pipe
@@ -260,8 +260,8 @@ async def quality_encode(bot, query, c_thumb):
                         if time() - last_update_time > 5:  # Update every 5 seconds
                             progress_bar = "▓" * floor(percentage / 5) + "░" * (20 - floor(percentage / 5))
                             progress_message = (
-                                f"🎥 **Encoding Progress**:\n"
-                                f"**[{progress_bar}]** {percentage:.2f}%\n"
+                                f"🎥 **Encoding Progress**:\n\n"
+                                f"**[{progress_bar}]** {percentage:.2f}%\n\n"
                                 f"**Elapsed Time**: {time() - start_time:.2f} seconds\n"
                                 f"**Current Size**: {current_size:.2f} MB\n"
                                 f"**Estimated Final Size**: {estimated_size:.2f} MB\n"
