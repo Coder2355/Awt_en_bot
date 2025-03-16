@@ -226,8 +226,8 @@ async def quality_encode(bot, query, c_thumb):
                         progress=progress_for_pyrogram,
                         progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time())
                         )
-            l=await ms.edit("File downloaded successfully ✅)
-            asyncio.sleep(2)
+            l=await ms.edit("File downloaded successfully ✅")
+            asyncio.sleep(3)
             await l.delete()
         except Exception as e:
             return await ms.edit(str(e))
