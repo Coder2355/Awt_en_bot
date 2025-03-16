@@ -200,14 +200,19 @@ async def quality_encode(bot, query, c_thumb):
         Output_DIR = f"encode/{UID}"
         File_Path = f"{Download_DIR}/{filename}"
         Output_Path = f"{Output_DIR}/{filename}"
+        
         if media.video:
-            duration = media.video.duration if hasattr(media, "video") and media.video else 0
-        elif media.document:
-            duration = media.document.duration if hasattr(media, "document") and media.document else 0
+            duration = media.video.duration if hasattr(media.video, "duration") else 0
         elif media.audio:
-            duration = media.audio.duration if hasattr(media, "audio") and media.audio else 0
+            duration = media.audio.duration if hasattr(media.audio, "duration") else 0
+        elif media.document:
+            if media.document.mime_type.startswith("video/"):  # Check if document is a video
+                duration = media.document.attributes[0].duration if hasattr(media.document.attributes[0], "duration") else 0
+    
+            else:
+                return await query.message.reply_text("Send a correct file format")
         else:
-            await query.message.reply_text("Send a Correct file Format")
+            return await query.message.reply_text("Send a correct file format")
 
         await ms.edit('⚠️__**Please wait...**__\n**Tʀyɪɴɢ Tᴏ Dᴏᴡɴʟᴏᴀᴅɪɴɢ....**')
         start_time = time()
@@ -221,6 +226,9 @@ async def quality_encode(bot, query, c_thumb):
                         progress=progress_for_pyrogram,
                         progress_args=("\n⚠️__**Please wait...**__\n\n☃️ **Dᴏᴡɴʟᴏᴀᴅ Sᴛᴀʀᴛᴇᴅ....**", ms, time())
                         )
+            l=await ms.edit("File downloaded successfully ✅)
+            asyncio.sleep(2)
+            await l.delete()
         except Exception as e:
             return await ms.edit(str(e))
         resolutions = {
